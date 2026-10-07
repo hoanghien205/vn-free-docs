@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import SectionTitle from '@/components/SectionTitle.vue'
 import ToolCard from '@/components/ToolCard.vue'
+import ToolDetailDialog from '@/components/ToolDetailDialog.vue'
 import { toolCategories, tools } from '@/data/tools'
 import { useLocale } from '@/composables/useLocale'
 
@@ -9,6 +10,15 @@ const { t, lp } = useLocale()
 
 const search = ref('')
 const activeCategory = ref('all')
+
+// Hộp thoại mô tả dự án: một instance dùng chung cho cả danh sách.
+const dialogOpen = ref(false)
+const selectedTool = ref(null)
+
+function openTool(tool) {
+  selectedTool.value = tool
+  dialogOpen.value = true
+}
 
 // Chú thích 3 nhãn trạng thái hiện trên mỗi thẻ công cụ.
 const statusLegend = [
@@ -124,7 +134,7 @@ function clearFilters() {
           lg="4"
         >
           <div v-reveal="{ delay: (index % 3) * 90 }" class="h-100">
-            <ToolCard :tool="tool" />
+            <ToolCard :tool="tool" @open="openTool" />
           </div>
         </v-col>
       </v-row>
@@ -157,6 +167,12 @@ function clearFilters() {
         </div>
       </v-alert>
     </v-container>
+
+    <ToolDetailDialog
+      v-model="dialogOpen"
+      :tool="selectedTool"
+      @after-leave="selectedTool = null"
+    />
   </section>
 </template>
 

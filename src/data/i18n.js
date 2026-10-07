@@ -92,6 +92,31 @@ export const messages = {
       ctaNotify: 'Nhận thông báo khi có',
       note: 'Bạn cần một mẫu chưa có trong danh sách? Nhắn cho tôi, tôi sẽ làm nếu thấy hữu ích cho nhiều người.',
       requestCta: 'Đề xuất tài liệu mới',
+      detail: {
+        dialogLabel: 'Thông tin dự án',
+        aboutTitle: 'Về dự án này',
+        highlightsTitle: 'Điểm nổi bật',
+        meta: {
+          format: 'Định dạng',
+          version: 'Phiên bản',
+          updated: 'Cập nhật',
+          license: 'Giấy phép',
+        },
+        download: 'Tải về',
+        downloadReady: 'Sẵn sàng để tải',
+        notReady: 'Chưa phát hành',
+        close: 'Đóng',
+        closeLabel: 'Đóng hộp thoại',
+        demoBadge: 'Link mẫu',
+        demoNote:
+          'Nút tải đang gắn link mẫu. Mở src/data/tools.js và thay trường link bằng địa chỉ thật (Google Drive, GitHub…) khi phát hành.',
+        demoClick: 'Đây là link tải mẫu nên chưa mở được — hãy thay bằng link thật trong src/data/tools.js.',
+        statusNote: {
+          inProgress: 'Công cụ đang được hoàn thiện. Để lại liên hệ, tôi sẽ báo bạn ngay khi phát hành.',
+          planned: 'Công cụ nằm trong kế hoạch phát triển. Để lại liên hệ để nhận thông báo khi có bản dùng thử.',
+        },
+        notify: 'Nhận thông báo khi có',
+      },
     },
     solutions: {
       eyebrow: 'Cho doanh nghiệp',
@@ -261,6 +286,31 @@ export const messages = {
       ctaNotify: 'Notify me when ready',
       note: 'Need a template that is not listed yet? Message me — I will build it if it helps enough people.',
       requestCta: 'Request a new document',
+      detail: {
+        dialogLabel: 'Project details',
+        aboutTitle: 'About this project',
+        highlightsTitle: 'Highlights',
+        meta: {
+          format: 'Format',
+          version: 'Version',
+          updated: 'Updated',
+          license: 'License',
+        },
+        download: 'Download',
+        downloadReady: 'Ready to download',
+        notReady: 'Not released yet',
+        close: 'Close',
+        closeLabel: 'Close dialog',
+        demoBadge: 'Demo link',
+        demoNote:
+          'The download button currently points to a placeholder link. Open src/data/tools.js and replace the link field with the real address (Google Drive, GitHub…) before launch.',
+        demoClick: 'This is a placeholder download link — replace it with the real one in src/data/tools.js.',
+        statusNote: {
+          inProgress: 'This tool is still being finished. Leave your contact and I will let you know the moment it ships.',
+          planned: 'This tool is on the roadmap. Leave your contact to hear when the early build is ready.',
+        },
+        notify: 'Notify me when ready',
+      },
     },
     solutions: {
       eyebrow: 'For business',

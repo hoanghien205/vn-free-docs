@@ -37,7 +37,7 @@ src/
   assets/styles/main.css   # CSS toàn cục: hiệu ứng reveal, blob, glass, hover
   components/              # AppBar, HeroSection, FreeTools, Solutions, Process,
                            # ContactDonate, AppFooter, SectionTitle, ToolCard,
-                           # SolutionCard, CopyField, ContactForm
+                           # ToolDetailDialog, SolutionCard, CopyField, ContactForm
   composables/             # useLocale, useCopy, useRevealOnScroll
   data/                    # ← TOÀN BỘ NỘI DUNG NẰM Ở ĐÂY
   plugins/vuetify.js       # cấu hình theme màu & mặc định component
@@ -72,14 +72,27 @@ Mở `src/data/tools.js`, copy một object có sẵn và sửa lại:
   link: 'https://link-that-cua-ban', // TODO: thay link thật
   vi: { name: '…', description: '…' },
   en: { name: '…', description: '…' },
+  details: {                      // không bắt buộc — nội dung cho hộp thoại mô tả
+    vi: {
+      overview: 'Đoạn giới thiệu 2–3 câu về dự án…',
+      highlights: ['Điểm nổi bật 1', 'Điểm nổi bật 2', '…'],
+      format: 'Excel (.xlsx)',    // 4 ô thông tin nhanh, bỏ trống ô nào cũng được
+      version: 'v1.0',
+      updated: 'Tháng 9/2026',
+      license: 'Miễn phí',
+    },
+    en: { overview: '…', highlights: ['…'], format: '…', version: '…', updated: '…', license: '…' },
+  },
 }
 ```
 
 `status` quyết định nhãn trên thẻ và nút hành động:
 
-- `available` — đã có, nút dẫn tới `link` để tải/mở.
-- `inProgress` — đang làm, nút đổi thành “Nhận thông báo khi có” và trỏ về mục Liên hệ.
+- `available` — đã có: nút “Tải / mở công cụ” mở **hộp thoại mô tả dự án** (`ToolDetailDialog`), trong đó có nút tải gắn `link`. Khi `link` còn là `#` thì nút đó được coi là link mẫu và chỉ hiện thông báo nhắc thay link thật.
+- `inProgress` — đang làm: nút đổi thành “Nhận thông báo khi có”, mở cùng hộp thoại mô tả nhưng thay nút tải bằng ghi chú “đang hoàn thiện” và nút dẫn về mục Liên hệ.
 - `planned` — nằm trong kế hoạch, xử lý giống `inProgress`.
+
+Nội dung vài chữ trong hộp thoại (tiêu đề mục, nhãn ô thông tin, ghi chú link mẫu…) nằm ở `tools.detail` trong `src/data/i18n.js`; phần mô tả từng dự án nằm ở `details.vi` / `details.en` trong `src/data/tools.js`.
 
 Hiện chỉ nhóm **Văn bản** (soạn thảo văn bản) và **Excel** (trang tính) là `available`; nhóm **Công cụ khác** để `inProgress` hoặc `planned` cho tới khi làm xong.
 

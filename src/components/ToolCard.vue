@@ -1,11 +1,15 @@
 <script setup>
 import { computed } from 'vue'
 import { accentGradient } from '@/data/accents'
+import { TOOL_STATUS_META, TOOL_TAG_META } from '@/data/tools'
 import { useLocale } from '@/composables/useLocale'
 
 const props = defineProps({
   tool: { type: Object, required: true },
 })
+
+// Thẻ không tự tải file nữa: bấm nút là mở hộp thoại mô tả dự án (FreeTools giữ hộp thoại đó).
+const emit = defineEmits(['open'])
 
 const { t, lp } = useLocale()
 
@@ -14,28 +18,16 @@ const content = computed(() => lp(props.tool))
 const logo = computed(() => props.tool.logo ?? null)
 const tileStyle = computed(() => ({ background: accentGradient(props.tool.accent) }))
 
-const TAG_META = {
-  free: { color: 'primary', icon: 'mdi-gift-outline' },
-  openSource: { color: 'accent', icon: 'mdi-source-branch' },
-  updated: { color: 'secondary', icon: 'mdi-clock-fast' },
-}
-
-const STATUS_META = {
-  available: { color: 'success', icon: 'mdi-check-circle-outline' },
-  inProgress: { color: 'warning', icon: 'mdi-progress-wrench' },
-  planned: { color: 'info', icon: 'mdi-calendar-clock-outline' },
-}
-
-const tag = computed(() => TAG_META[props.tool.tag] ?? TAG_META.free)
+const tag = computed(() => TOOL_TAG_META[props.tool.tag] ?? TOOL_TAG_META.free)
 const status = computed(() => props.tool.status ?? 'available')
-const statusMeta = computed(() => STATUS_META[status.value] ?? STATUS_META.available)
+const statusMeta = computed(() => TOOL_STATUS_META[status.value] ?? TOOL_STATUS_META.available)
 const isAvailable = computed(() => status.value === 'available')
 
-// Mục chưa ra mắt thì không dẫn tới link tải nữa mà mời người dùng để lại liên hệ.
+// Nút trên thẻ luôn mở hộp thoại mô tả dự án; hành động tải hay nhận thông báo nằm trong đó.
 const cta = computed(() =>
   isAvailable.value
-    ? { href: props.tool.link, label: t('tools.cta'), icon: 'mdi-arrow-right', external: true }
-    : { href: '#lien-he', label: t('tools.ctaNotify'), icon: 'mdi-bell-outline', external: false },
+    ? { label: t('tools.cta'), icon: 'mdi-arrow-right' }
+    : { label: t('tools.ctaNotify'), icon: 'mdi-bell-outline' },
 )
 </script>
 
@@ -74,13 +66,11 @@ const cta = computed(() =>
       <v-divider class="my-5" />
 
       <v-btn
-        :href="cta.href"
-        :target="cta.external ? '_blank' : undefined"
-        :rel="cta.external ? 'noopener' : undefined"
         variant="text"
         color="primary"
         :append-icon="cta.icon"
         class="px-0 align-self-start"
+        @click="emit('open', tool)"
       >
         {{ cta.label }}
       </v-btn>
