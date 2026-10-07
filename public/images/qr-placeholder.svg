@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" width="320" height="320" role="img" aria-label="Ảnh QR mẫu">
+  <rect width="320" height="320" fill="#ffffff" />
+  <g fill="#0A1024">
+    <rect x="24" y="24" width="72" height="72" />
+    <rect x="224" y="24" width="72" height="72" />
+    <rect x="24" y="224" width="72" height="72" />
+  </g>
+  <g fill="#ffffff">
+    <rect x="38" y="38" width="44" height="44" />
+    <rect x="238" y="38" width="44" height="44" />
+    <rect x="38" y="238" width="44" height="44" />
+  </g>
+  <g fill="#2B5CFF">
+    <rect x="52" y="52" width="16" height="16" />
+    <rect x="252" y="52" width="16" height="16" />
+    <rect x="52" y="252" width="16" height="16" />
+  </g>
+  <g fill="#0A1024">
+    <rect x="120" y="24" width="16" height="16" />
+    <rect x="152" y="24" width="16" height="16" />
+    <rect x="184" y="40" width="16" height="16" />
+    <rect x="120" y="56" width="32" height="16" />
+    <rect x="168" y="72" width="16" height="32" />
+    <rect x="24" y="120" width="16" height="16" />
+    <rect x="56" y="136" width="16" height="16" />
+    <rect x="88" y="120" width="16" height="32" />
+    <rect x="120" y="104" width="48" height="16" />
+    <rect x="184" y="120" width="16" height="16" />
+    <rect x="216" y="136" width="32" height="16" />
+    <rect x="264" y="120" width="16" height="32" />
+    <rect x="136" y="152" width="16" height="16" />
+    <rect x="168" y="168" width="32" height="16" />
+    <rect x="216" y="184" width="16" height="16" />
+    <rect x="248" y="200" width="32" height="16" />
+    <rect x="120" y="216" width="16" height="16" />
+    <rect x="152" y="232" width="32" height="16" />
+    <rect x="200" y="248" width="16" height="32" />
+    <rect x="232" y="264" width="32" height="16" />
+    <rect x="280" y="232" width="16" height="16" />
+    <rect x="112" y="272" width="32" height="16" />
+    <rect x="160" y="288" width="16" height="16" />
+  </g>
+  <g fill="#12C8C0">
+    <rect x="120" y="184" width="16" height="16" />
+    <rect x="184" y="216" width="16" height="16" />
+    <rect x="248" y="152" width="16" height="16" />
+  </g>
+  <rect x="96" y="96" width="128" height="128" fill="none" stroke="#ffffff" stroke-width="0" />
+  <g transform="translate(104 104)">
+    <rect width="112" height="112" rx="22" fill="#ffffff" />
+    <text
+      x="56"
+      y="52"
+      text-anchor="middle"
+      font-family="Be Vietnam Pro, Arial, sans-serif"
+      font-size="20"
+      font-weight="700"
+      fill="#0A1024"
+    >
+      QR MẪU
+    </text>
+    <text
+      x="56"
+      y="76"
+      text-anchor="middle"
+      font-family="Be Vietnam Pro, Arial, sans-serif"
+      font-size="13"
+      fill="#4A5573"
+    >
+      Thay ảnh thật
+    </text>
+  </g>
+</svg>

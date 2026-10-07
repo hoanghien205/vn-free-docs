@@ -1,0 +1,207 @@
+/* ------------------------------------------------------------------
+   VN Free Docs — stylesheet toàn cục (giữ ở mức tối thiểu,
+   phần lớn giao diện dùng component & theme của Vuetify).
+------------------------------------------------------------------ */
+
+:root {
+  --vnf-radius-lg: 20px;
+  --vnf-radius-xl: 28px;
+  --vnf-header-height: 76px;
+  --vnf-shell-width: 1200px;
+  --vnf-gradient: linear-gradient(120deg, #2b5cff 0%, #12c8c0 52%, #7b5cff 100%);
+  --vnf-gradient-soft: linear-gradient(120deg, rgba(43, 92, 255, 0.18), rgba(123, 92, 255, 0.14));
+  --vnf-shadow-soft: 0 18px 50px -24px rgba(12, 20, 60, 0.38);
+  --vnf-shadow-lift: 0 30px 70px -30px rgba(12, 20, 60, 0.5);
+}
+
+.v-theme--dark {
+  --vnf-shadow-soft: 0 18px 50px -22px rgba(0, 0, 0, 0.7);
+  --vnf-shadow-lift: 0 34px 80px -34px rgba(0, 0, 0, 0.85);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: 'Be Vietnam Pro', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Vùng neo phải chừa chỗ cho app bar dính trên đầu trang */
+section[id] {
+  scroll-margin-top: calc(var(--vnf-header-height) + 24px);
+}
+
+:focus-visible {
+  outline: 3px solid rgba(43, 92, 255, 0.55);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+::selection {
+  background: rgba(43, 92, 255, 0.22);
+}
+
+/* ---------- Tiện ích dùng chung ---------- */
+.section-block {
+  padding-block: clamp(72px, 9vw, 132px);
+  position: relative;
+}
+
+.section-shell {
+  max-width: var(--vnf-shell-width);
+}
+
+.gradient-text {
+  background: var(--vnf-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.glass-card {
+  background: color-mix(in srgb, rgb(var(--v-theme-surface)) 86%, transparent) !important;
+  backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid color-mix(in srgb, rgb(var(--v-theme-on-surface)) 9%, transparent) !important;
+  box-shadow: var(--vnf-shadow-soft);
+}
+
+.surface-card {
+  border: 1px solid color-mix(in srgb, rgb(var(--v-theme-on-surface)) 8%, transparent) !important;
+  box-shadow: var(--vnf-shadow-soft);
+  background: rgb(var(--v-theme-surface)) !important;
+}
+
+.hover-lift {
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.35s ease;
+}
+
+.hover-lift:hover,
+.hover-lift:focus-within {
+  transform: translateY(-6px);
+  box-shadow: var(--vnf-shadow-lift);
+  border-color: color-mix(in srgb, rgb(var(--v-theme-primary)) 45%, transparent) !important;
+}
+
+.icon-tile {
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  color: #fff;
+  box-shadow: 0 12px 30px -14px rgba(12, 20, 60, 0.65);
+}
+
+.mono {
+  font-family: 'SFMono-Regular', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+  letter-spacing: 0.01em;
+}
+
+/* ---------- Hiệu ứng xuất hiện khi cuộn ---------- */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 26px, 0);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.reveal--visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- App bar kính mờ ---------- */
+.app-bar-glass {
+  background: color-mix(in srgb, rgb(var(--v-theme-surface)) 72%, transparent) !important;
+  backdrop-filter: blur(18px) saturate(180%);
+  border-bottom: 1px solid color-mix(in srgb, rgb(var(--v-theme-on-surface)) 8%, transparent);
+}
+
+.app-bar-glass .v-toolbar__content {
+  padding-inline: 0;
+}
+
+/* ---------- Blob & hình nền hero ---------- */
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.55;
+  animation: blob-float 18s ease-in-out infinite;
+}
+
+.blob--1 {
+  width: clamp(280px, 38vw, 520px);
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 30% 30%, #2b5cff, transparent 70%);
+  top: -8%;
+  left: -6%;
+}
+
+.blob--2 {
+  width: clamp(240px, 32vw, 460px);
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 60% 40%, #12c8c0, transparent 70%);
+  top: 12%;
+  right: -4%;
+  animation-delay: -6s;
+}
+
+.blob--3 {
+  width: clamp(220px, 28vw, 420px);
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 50% 50%, #7b5cff, transparent 70%);
+  bottom: -12%;
+  left: 32%;
+  animation-delay: -11s;
+}
+
+@keyframes blob-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(4%, -5%, 0) scale(1.07);
+  }
+  66% {
+    transform: translate3d(-4%, 4%, 0) scale(0.96);
+  }
+}
+
+/* ---------- Thanh cuộn ---------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, rgb(var(--v-theme-primary)) 45%, transparent);
+  border-radius: 999px;
+}
+
+/* ---------- Tôn trọng người dùng giảm chuyển động ---------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
