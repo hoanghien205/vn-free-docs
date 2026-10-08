@@ -1,20 +1,32 @@
 <script setup>
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useLocale } from '@/composables/useLocale'
+import { useMessages } from '@/composables/useMessages'
+import { MESSAGE_TYPES, messageTypeMeta, submitMessage } from '@/data/inbox'
 
 const emit = defineEmits(['submitted'])
 
 const { t } = useLocale()
+const { addMessage, markMessageSynced } = useMessages()
 
 const formRef = ref(null)
 const loading = ref(false)
 
 const form = reactive({
+  type: 'feedback',
   name: '',
   email: '',
   phone: '',
   message: '',
 })
+
+// Dùng computed để nhãn đổi theo khi người dùng chuyển VI/EN.
+const typeOptions = computed(() =>
+  MESSAGE_TYPES.map((value) => {
+    const meta = messageTypeMeta(value)
+    return { value, title: t(`inbox.types.${value}`), props: { prependIcon: meta.icon } }
+  }),
+)
 
 const rules = {
   name: [
@@ -23,7 +35,8 @@ const rules = {
   ],
   email: [
     (value) => !!value || t('contact.validation.emailRequired'),
-    (value) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value ?? '') || t('contact.validation.emailInvalid'),
+    (value) =>
+      /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value ?? '') || t('contact.validation.emailInvalid'),
   ],
   message: [
     (value) => !!value || t('contact.validation.messageRequired'),
@@ -36,12 +49,19 @@ async function submit() {
   if (!result?.valid) return
 
   loading.value = true
-  // Demo frontend-only: chưa gửi dữ liệu đi đâu cả.
-  // TODO: nối tới API/Formspree/Telegram bot nếu muốn nhận tin thật.
-  await new Promise((resolve) => setTimeout(resolve, 700))
-  loading.value = false
 
-  emit('submitted', { ...form })
+  const payload = { ...form }
+  // 1) Luôn lưu vào hộp thư nội bộ để không mất tin nhắn.
+  const saved = addMessage({ ...payload, source: 'website' })
+  // 2) Gửi ra kênh thật (nếu có cấu hình trong src/data/inbox.js).
+  const delivery = await submitMessage(payload)
+  // 3) Backend đã tạo bản ghi riêng → đồng bộ id để không bị trùng khi tải lại.
+  if (delivery.ok && delivery.via === 'api' && delivery.id) {
+    markMessageSynced(saved.id, delivery)
+  }
+
+  loading.value = false
+  emit('submitted', { ...payload, id: saved.id, delivery })
   formRef.value?.reset()
 }
 </script>
@@ -49,6 +69,16 @@ async function submit() {
 <template>
   <v-form ref="formRef" class="contact-form d-flex flex-column h-100" @submit.prevent="submit">
     <v-row class="gy-1">
+      <v-col cols="12">
+        <v-select
+          v-model="form.type"
+          :items="typeOptions"
+          :label="t('contact.fields.type')"
+          prepend-inner-icon="mdi-tag-outline"
+          class="contact-form__type"
+        />
+      </v-col>
+
       <v-col cols="12" md="6">
         <v-text-field
           v-model="form.name"

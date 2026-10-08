@@ -30,6 +30,17 @@ npm run lint      # kiểm tra & tự sửa lỗi ESLint
 npm run format    # định dạng code bằng Prettier
 ```
 
+Muốn lưu tin nhắn vào MongoDB thật, mở thêm một terminal và chạy backend:
+
+```bash
+cd server
+npm install
+npm run dev:memory   # thử nhanh, không cần Atlas (in sẵn địa chỉ API + ADMIN_TOKEN)
+# hoặc: cp .env.example .env → điền MONGODB_URI → npm start
+```
+
+Chi tiết ở **mục 8**.
+
 ## 3. Cấu trúc thư mục
 
 ```
@@ -37,25 +48,28 @@ src/
   assets/styles/main.css   # CSS toàn cục: hiệu ứng reveal, blob, glass, hover
   components/              # AppBar, HeroSection, FreeTools, Solutions, Process,
                            # ContactDonate, AppFooter, SectionTitle, ToolCard,
-                           # ToolDetailDialog, SolutionCard, CopyField, ContactForm
-  composables/             # useLocale, useCopy, useRevealOnScroll
+                           # ToolDetailDialog, SolutionCard, CopyField, ContactForm,
+                           # InboxAdmin, MessageDetailDialog
+  composables/             # useLocale, useCopy, useRevealOnScroll, useMessages, useDateFormat
   data/                    # ← TOÀN BỘ NỘI DUNG NẰM Ở ĐÂY
   plugins/vuetify.js       # cấu hình theme màu & mặc định component
   App.vue, main.js
 public/                    # favicon, ảnh OG, ảnh QR mẫu
+server/                    # backend Express + MongoDB (tuỳ chọn, xem mục 8)
 ```
 
 ## 4. Sửa nội dung (không cần chạm vào component)
 
-| Muốn đổi gì | Sửa file |
-| --- | --- |
-| Tên thương hiệu, tên chủ sở hữu, domain, SEO | `src/data/site.js` |
-| Danh sách tài liệu/công cụ miễn phí | `src/data/tools.js` |
-| Giải pháp cho doanh nghiệp | `src/data/solutions.js` |
-| Quy trình làm việc 4 bước | `src/data/process.js` |
-| Email, Zalo, Telegram, GitHub, Facebook | `src/data/contact.js` → `contactChannels` |
-| Thông tin chuyển khoản & ví crypto | `src/data/contact.js` → `donate` |
-| Mọi chuỗi chữ VI/EN trên giao diện | `src/data/i18n.js` |
+| Muốn đổi gì                                               | Sửa file                                  |
+| --------------------------------------------------------- | ----------------------------------------- |
+| Tên thương hiệu, tên chủ sở hữu, domain, SEO              | `src/data/site.js`                        |
+| Danh sách tài liệu/công cụ miễn phí                       | `src/data/tools.js`                       |
+| Giải pháp cho doanh nghiệp                                | `src/data/solutions.js`                   |
+| Quy trình làm việc 4 bước                                 | `src/data/process.js`                     |
+| Email, Zalo, Telegram, GitHub, Facebook                   | `src/data/contact.js` → `contactChannels` |
+| Thông tin chuyển khoản & ví crypto                        | `src/data/contact.js` → `donate`          |
+| Kênh nhận tin nhắn, Google Sheet, mật khẩu trang quản trị | `src/data/inbox.js`                       |
+| Mọi chuỗi chữ VI/EN trên giao diện                        | `src/data/i18n.js`                        |
 
 ### Thêm một công cụ mới
 
@@ -134,30 +148,246 @@ light: {
 6. **Ví crypto** — `src/data/contact.js` → `donate.crypto`: mạng và địa chỉ ví thật.
 7. **Ảnh chia sẻ mạng xã hội** — `public/og-image.svg` đang là ảnh SVG minh hoạ. Hãy xuất một ảnh **PNG 1200×630** rồi trỏ `og:image` trong `index.html` tới ảnh đó.
 8. **Favicon** — `public/favicon.svg`.
-9. **Form liên hệ** — hiện chỉ là demo phía trình duyệt, tin nhắn **không được gửi đi**. Xem mục 7 bên dưới để nối với dịch vụ thật.
+9. **Kênh nhận tin nhắn** — mặc định tin nhắn gửi về backend Express + MongoDB trong `server/`. Hãy chạy backend đó (mục 8) và nhập địa chỉ API vào trang quản trị, hoặc đổi `transport` trong `src/data/inbox.js` sang Google Sheet / Web3Forms / Formspree / Telegram (mục 7).
 10. **`public/robots.txt`** — thay `https://example.com/sitemap.xml` bằng domain thật (và thêm `sitemap.xml` nếu cần).
 
-## 7. Nối form liên hệ với dịch vụ thật
+## 7. Hộp thư & góp ý khách hàng
 
-Mở `src/components/ContactForm.vue`, tìm hàm `submit()` và thay phần demo:
+### 7.1 Cách hoạt động
+
+Mọi tin nhắn gửi từ form liên hệ đều đi qua hai bước:
+
+1. **Lưu vào hộp thư nội bộ** (localStorage) — luôn thành công, kể cả khi kênh gửi bên dưới gặp lỗi.
+2. **Gửi tới kênh lưu trữ thật** bạn cấu hình trong `src/data/inbox.js` — mặc định là backend Express + MongoDB (`transport: 'api'`, xem mục 8).
+
+> Chưa chạy backend? Không sao. Khi chưa nhập địa chỉ API, tin nhắn tự động được lưu ở trình duyệt và khách vẫn thấy thông báo gửi thành công bình thường.
+
+Trang quản trị: mở **`/#/hop-thu`** (cũng có link nhỏ “Hộp thư” ở chân trang). Mỗi tin nhắn có link riêng dạng `#/hop-thu/<id>` để bookmark hoặc gửi cho người khác.
+
+Trang quản trị cho phép: xem thống kê, tìm kiếm, lọc theo trạng thái / loại nội dung, sắp xếp, đánh dấu sao, ghi chú nội bộ, đổi trạng thái (**Chưa đọc → Đã đọc → Đã trả lời → Lưu trữ**), trả lời nhanh bằng email (mở sẵn nội dung), xuất/nhập JSON (sao lưu) và xuất CSV để mở bằng Excel.
+
+> Trang này là lớp quản trị nhẹ chạy hoàn toàn ở trình duyệt. Nếu bạn cần bảo mật thật, hãy dùng `admin.passcode` như một lớp chắn tạm và đặt trang sau một dịch vụ xác thực (Cloudflare Access, Vercel Password Protection…).
+
+### 7.2 Chọn kênh nhận tin (`src/data/inbox.js`)
+
+| `transport`          | Cần điền                               | Phù hợp khi                                                                                    |
+| -------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `'api'` _(mặc định)_ | địa chỉ backend (mục 8)                | **Khuyến nghị** — backend Express + MongoDB trong `server/`, dữ liệu nằm trong Atlas của bạn.  |
+| `'local'`            | –                                      | Muốn chạy ngay, không cần tài khoản. Tin chỉ nằm trong trình duyệt đang mở.                    |
+| `'custom'`           | `custom.endpoint`                      | Google Apps Script + Google Sheet (miễn phí, dữ liệu thuộc về bạn — xem 7.3).                  |
+| `'web3forms'`        | `web3forms.accessKey`                  | Muốn nhận email mỗi khi có tin, cài đặt trong 2 phút ([web3forms.com](https://web3forms.com)). |
+| `'formspree'`        | `formspree.endpoint`                   | Đã có sẵn form Formspree.                                                                      |
+| `'telegram'`         | `telegram.botToken`, `telegram.chatId` | Muốn nhận thông báo tức thì qua Telegram.                                                      |
+
+Ví dụ:
 
 ```js
-// Demo hiện tại
-await new Promise((resolve) => setTimeout(resolve, 700))
-emit('submitted', { ...form })
-
-// Ví dụ gọi API thật
-const res = await fetch('https://formspree.io/f/xxxxxxx', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(form),
-})
-if (res.ok) emit('submitted', { ...form })
+export const inboxConfig = {
+  transport: 'web3forms',
+  web3forms: { accessKey: 'dán-key-của-bạn-ở-đây', subject: 'Tin nhắn mới từ website' },
+  // …
+}
 ```
 
-Có thể dùng Formspree, Google Apps Script, Telegram Bot API hoặc API riêng của bạn.
+### 7.3 Giải pháp miễn phí: Google Sheet làm nơi lưu trữ
 
-## 8. Deploy
+1. Tạo một Google Sheet mới, đặt tên trang tính là **`Inbox`**.
+2. Vào **Tiện ích mở rộng → Apps Script**, dán đoạn mã sau rồi lưu:
+
+```js
+const SHEET_NAME = 'Inbox'
+const TOKEN = 'doi-chuoi-nay-thanh-bi-mat-cua-ban'
+
+const HEADERS = [
+  'id',
+  'createdAt',
+  'type',
+  'status',
+  'starred',
+  'name',
+  'email',
+  'phone',
+  'message',
+  'note',
+]
+
+function sheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  let sheet = ss.getSheetByName(SHEET_NAME)
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME)
+    sheet.appendRow(HEADERS)
+  }
+  return sheet
+}
+
+function doPost(e) {
+  const body = JSON.parse(e.postData.contents)
+
+  // Cập nhật trạng thái / ghi chú từ trang quản trị
+  if (body.action === 'update') {
+    if (body.token !== TOKEN) return json_({ ok: false })
+    const sheet = sheet_()
+    const rows = sheet.getDataRange().getValues()
+    for (let i = 1; i < rows.length; i++) {
+      if (String(rows[i][0]) !== String(body.id)) continue
+      Object.entries(body.patch || {}).forEach(([key, value]) => {
+        const col = HEADERS.indexOf(key)
+        if (col >= 0) sheet.getRange(i + 1, col + 1).setValue(value)
+      })
+      break
+    }
+    return json_({ ok: true })
+  }
+
+  // Tin nhắn mới từ form liên hệ
+  sheet_().appendRow([
+    body.id || Utilities.getUuid(),
+    body.createdAt || new Date().toISOString(),
+    body.type || 'other',
+    'new',
+    false,
+    body.name || '',
+    body.email || '',
+    body.phone || '',
+    body.message || '',
+    '',
+  ])
+  return json_({ ok: true })
+}
+
+function doGet(e) {
+  if (e.parameter.token !== TOKEN) return json_({ ok: false, messages: [] })
+  const rows = sheet_().getDataRange().getValues()
+  const headers = rows.shift()
+  const messages = rows
+    .filter((row) => row[0])
+    .map((row) => Object.fromEntries(headers.map((h, i) => [h, row[i]])))
+  return json_({ ok: true, messages })
+}
+
+function json_(payload) {
+  return ContentService.createTextOutput(JSON.stringify(payload)).setMimeType(
+    ContentService.MimeType.JSON,
+  )
+}
+```
+
+3. **Triển khai → Tuỳ chỉnh triển khai mới → Ứng dụng web**: _Thực thi với tư cách_ = **Tôi**, _Ai có quyền truy cập_ = **Bất kỳ ai**. Lấy URL `/exec`.
+4. Điền vào `src/data/inbox.js`:
+
+```js
+transport: 'custom',
+custom: { endpoint: 'https://script.google.com/macros/s/AKfy…/exec' },
+remote: { enabled: true, endpoint: 'https://script.google.com/macros/s/AKfy…/exec', token: 'doi-chuoi-nay-thanh-bi-mat-cua-ban' },
+```
+
+Như vậy tin nhắn vừa được lưu vào Sheet, vừa hiện trong trang quản trị của website và đổi trạng thái được ghi ngược lại Sheet.
+
+### 7.4 Vài tuỳ chọn khác trong `src/data/inbox.js`
+
+- `admin.passcode` — mật khẩu mở trang quản trị (để trống = mở tự do). Chỉ là lớp chắn nhẹ.
+- `seedDemo` — `true` để nạp vài tin nhắn mẫu khi hộp thư còn trống (giúp xem trước giao diện). Trong trang quản trị có nút **Xoá tin nhắn mẫu**.
+- `maxMessages` — số tin nhắn tối đa giữ trong localStorage (mặc định 500).
+- `remote.readOnly` — bật nếu chỉ muốn xem dữ liệu từ Google Sheet mà không cho sửa.
+
+## 8. Backend Express + MongoDB (`server/`)
+
+Phần này là nơi lưu tin nhắn thật: mỗi tin khách gửi được ghi vào MongoDB Atlas, và trang quản trị đọc/sửa/xoá trực tiếp trên đó.
+
+### 8.1 Cài đặt & chạy
+
+```bash
+cd server
+npm install
+cp .env.example .env      # rồi mở .env điền mật khẩu MongoDB
+npm start                 # hoặc: npm run dev (tự khởi động lại khi sửa code)
+```
+
+`server/.env` tối thiểu cần:
+
+```ini
+MONGODB_URI=mongodb+srv://hackernovirus_db_user:<PASSWORD>@web-vn-docs.2yvpi2n.mongodb.net/?retryWrites=true&w=majority&appName=web-vn-docs
+MONGODB_DB=vnfreedocs
+ADMIN_TOKEN=chuoi-bi-mat-dai-it-nhat-32-ky-tu
+CORS_ORIGINS=https://vnfreedocs.vn,http://localhost:5173
+```
+
+- `<PASSWORD>` là mật khẩu của user `hackernovirus_db_user` trên Atlas. Nếu mật khẩu chứa ký tự đặc biệt (`@ : / ? # [ ] %`) thì phải URL-encode.
+- Quên `ADMIN_TOKEN` cũng không sao: server tự sinh một khoá và in ra console khi khởi động (nên đặt cố định trong `.env` cho gọn).
+- Vào **Atlas → Network Access** thêm IP của máy chủ chạy backend (khi deploy lên Render/Fly/Railway thường cần `0.0.0.0/0` hoặc IP tĩnh của dịch vụ).
+- **Muốn thử mà không cần Atlas:** chạy `npm run dev:memory` — backend sẽ dùng MongoDB in-memory và in sẵn địa chỉ API + token. Tắt là mất dữ liệu, chỉ dùng để thử.
+
+### 8.2 Nối frontend với backend
+
+Chạy `npm run dev` ở thư mục gốc, mở `/#/hop-thu` → bấm **Cấu hình backend** → dán địa chỉ API (`http://localhost:4000` khi chạy máy) và `ADMIN_TOKEN` → **Kiểm tra kết nối** → **Lưu & tải tin nhắn**. Cấu hình được lưu trong trình duyệt nên không phải build lại.
+
+Muốn đặt sẵn cho mọi người dùng, chọn một trong hai cách:
+
+```js
+// src/data/inbox.js
+api: { baseUrl: 'https://api.vnfreedocs.vn' },
+```
+
+hoặc tạo file `.env.local` ở thư mục gốc:
+
+```ini
+VITE_API_BASE_URL=https://api.vnfreedocs.vn
+```
+
+### 8.3 API
+
+| Method   | Đường dẫn             | Quyền           | Việc                                  |
+| -------- | --------------------- | --------------- | ------------------------------------- |
+| `GET`    | `/api/health`         | công khai       | Kiểm tra server + kết nối database    |
+| `POST`   | `/api/messages`       | công khai       | Khách gửi tin nhắn/góp ý              |
+| `GET`    | `/api/messages`       | `x-admin-token` | Danh sách (lọc, tìm kiếm, phân trang) |
+| `GET`    | `/api/messages/stats` | `x-admin-token` | Số liệu tổng quan                     |
+| `GET`    | `/api/messages/:id`   | `x-admin-token` | Chi tiết một tin nhắn                 |
+| `PATCH`  | `/api/messages/:id`   | `x-admin-token` | Đổi trạng thái / ghim sao / ghi chú   |
+| `DELETE` | `/api/messages/:id`   | `x-admin-token` | Xoá tin nhắn                          |
+
+```bash
+# Gửi thử một tin
+curl -X POST http://localhost:4000/api/messages \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Nguyễn Văn A","email":"a@congty.vn","message":"Cần tư vấn lưu trữ nội bộ cho 15 máy."}'
+
+# Đọc danh sách (cần khoá quản trị)
+curl http://localhost:4000/api/messages -H "x-admin-token: $ADMIN_TOKEN"
+```
+
+### 8.4 Bảo mật & chống spam (đã có sẵn)
+
+- `x-admin-token` bắt buộc cho mọi thao tác đọc/sửa/xoá, so sánh bằng `timingSafeEqual`.
+- Giới hạn tần suất gửi tin theo IP (`PUBLIC_RATE_LIMIT_MAX`, mặc định 8 tin / 10 phút) + honeypot `botcheck`.
+- `express.json({ limit: '32kb' })`, whitelist field, kiểm tra độ dài và định dạng email.
+- Header bảo vệ cơ bản (`nosniff`, `X-Frame-Options: DENY`, `no-store`…), CORS theo `CORS_ORIGINS`.
+- `Cache-Control: no-store` cho mọi phản hồi API.
+
+> Lưu ý: khoá quản trị nằm trong trình duyệt của bạn (localStorage) nên chỉ an toàn ở mức “khoá cửa”. Muốn chắc hơn, hãy đặt backend sau Cloudflare Access hoặc chỉ cho phép IP của bạn gọi các API quản trị.
+
+### 8.5 Deploy backend
+
+Backend là một tiến trình Node bình thường, chạy được trên Render, Railway, Fly.io, VPS…
+
+```bash
+# ví dụ trên VPS
+cd server && npm install --omit=dev
+PORT=4000 ADMIN_TOKEN=... MONGODB_URI=... node src/index.js
+```
+
+Nhớ: đặt `CORS_ORIGINS=https://vnfreedocs.vn` thay vì `*`, và nên chạy sau Nginx/Caddy để có HTTPS.
+
+### 8.6 Test
+
+```bash
+cd server && npm test
+```
+
+Bộ test dùng MongoDB in-memory thật và kiểm tra đủ luồng: tạo tin, validate, honeypot, hạn mức gửi, khoá quản trị, CORS, tìm kiếm, đổi trạng thái, thống kê, xoá, lỗi 404/400.
+
+## 9. Deploy
 
 ### Vercel
 
@@ -184,17 +414,20 @@ Có thể dùng Formspree, Google Apps Script, Telegram Bot API hoặc API riên
 3. Đưa thư mục `dist` lên nhánh `gh-pages` (dùng `gh-pages`, GitHub Actions, hoặc `git subtree push --prefix dist origin gh-pages`).
 4. Vào **Settings → Pages** chọn nhánh `gh-pages` và thư mục `/root`.
 
-> Trang chỉ có một file HTML duy nhất và điều hướng bằng anchor (`#cong-cu`, `#giai-phap`, `#quy-trinh`, `#lien-he`) nên không cần cấu hình rewrite cho SPA.
+> Trang chỉ có một file HTML duy nhất và điều hướng bằng anchor (`#cong-cu`, `#giai-phap`, `#quy-trinh`, `#lien-he`) cùng hash `#/hop-thu` cho trang quản trị, nên không cần cấu hình rewrite cho SPA.
 
-## 9. Ghi chú kỹ thuật
+## 10. Ghi chú kỹ thuật
 
 - `vite-plugin-vuetify` được bật `autoImport` để chỉ bundle component/stylesheet thực sự dùng (tree-shaking).
 - Điều hướng mượt bằng `scroll-behavior: smooth` + `scroll-margin-top` cho vùng anchor.
 - App bar dùng `backdrop-filter` để tạo hiệu ứng kính mờ.
 - Icon dùng `@mdi/font`, font dùng `@fontsource/be-vietnam-pro` (không phụ thuộc Google Fonts/CDN).
-- Form có kiểm tra dữ liệu (họ tên, email, nội dung) và hiển thị snackbar sau khi gửi thành công.
+- Form liên hệ kiểm tra dữ liệu (họ tên, email, nội dung), lưu tin nhắn vào hộp thư rồi mới gửi tới kênh thông báo; snackbar báo rõ tin đã gửi đi hay chỉ được lưu lại.
+- Trang quản trị hộp thư dùng định tuyến hash (`#/hop-thu`, `#/hop-thu/<id>`) nên không cần vue-router và vẫn deploy tĩnh được.
+- Backend `server/` viết bằng Express 5 + MongoDB driver chính thức, không dùng ODM; kết nối có retry và tự tạo index khi khởi động.
+- Frontend và backend chỉ nói chuyện qua JSON API, nên có thể deploy tách riêng (ví dụ web trên Vercel, API trên Render).
 - ESLint 9 (flat config) + Prettier đã cấu hình sẵn trong `eslint.config.js` và `.prettierrc.json`.
 
-## 10. Giấy phép
+## 11. Giấy phép
 
 Code trong dự án này có thể dùng tự do cho mục đích cá nhân. Nội dung văn bản mẫu trong `src/data` là ví dụ, hãy thay bằng nội dung thật của bạn.

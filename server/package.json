@@ -1,0 +1,24 @@
+{
+  "name": "vn-free-docs-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Backend Express + MongoDB lưu tin nhắn & góp ý khách hàng cho VN Free Docs.",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "dev:memory": "node scripts/dev-memory.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "mongodb": "^7.7.0"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^11.3.0"
+  }
+}

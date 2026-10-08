@@ -75,7 +75,18 @@ function scrollToTop() {
 
       <div class="d-flex flex-column flex-sm-row align-sm-center justify-space-between ga-3">
         <span class="text-caption text-medium-emphasis">{{ copyright }}</span>
-        <span class="text-caption text-medium-emphasis">{{ t('footer.madeWith') }}</span>
+        <div class="d-flex align-center flex-wrap ga-2">
+          <v-btn
+            variant="text"
+            size="small"
+            class="footer__admin"
+            prepend-icon="mdi-shield-account-outline"
+            href="#/hop-thu"
+          >
+            {{ t('inbox.nav') }}
+          </v-btn>
+          <span class="text-caption text-medium-emphasis">{{ t('footer.madeWith') }}</span>
+        </div>
       </div>
     </v-container>
   </footer>
@@ -129,5 +140,15 @@ function scrollToTop() {
 
 .footer__link:hover {
   color: rgb(var(--v-theme-primary));
+}
+
+/* Lối vào hộp thư quản trị: để nhỏ, không tranh chú ý với nội dung chính. */
+.footer__admin {
+  color: rgb(var(--v-theme-on-surface-variant));
+  opacity: 0.75;
+}
+
+.footer__admin:hover {
+  opacity: 1;
 }
 </style>

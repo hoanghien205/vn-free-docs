@@ -5,12 +5,12 @@ import prettier from 'eslint-config-prettier'
 
 export default [
   {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**'],
+    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'server/node_modules/**'],
   },
   js.configs.recommended,
   ...pluginVue.configs['flat/recommended'],
   {
-    files: ['**/*.{js,vue}'],
+    files: ['**/*.{js,mjs,vue}'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',

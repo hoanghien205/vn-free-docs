@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import SectionTitle from '@/components/SectionTitle.vue'
 import ContactForm from '@/components/ContactForm.vue'
 import CopyField from '@/components/CopyField.vue'
@@ -11,10 +11,22 @@ const { t, lp } = useLocale()
 
 const donateTab = ref('bank')
 const snackbar = ref(false)
+const lastSubmission = ref(null)
 
-function onSubmitted() {
+function onSubmitted(payload) {
+  lastSubmission.value = payload
   snackbar.value = true
 }
+
+// Trạng thái gửi: 'sent' (đã tới kênh thật), 'saved' (chỉ lưu vào hộp thư) hay 'error'.
+const deliveryState = computed(() => {
+  const delivery = lastSubmission.value?.delivery
+  if (!delivery) return 'saved'
+  if (!delivery.ok) return 'error'
+  return delivery.via === 'local' ? 'saved' : 'sent'
+})
+
+const snackbarColor = computed(() => (deliveryState.value === 'error' ? 'warning' : 'success'))
 </script>
 
 <template>
@@ -61,7 +73,12 @@ function onSubmitted() {
             </div>
           </v-card>
 
-          <v-card v-reveal="{ delay: 80 }" class="surface-card flex-grow-1" elevation="0" rounded="xl">
+          <v-card
+            v-reveal="{ delay: 80 }"
+            class="surface-card flex-grow-1"
+            elevation="0"
+            rounded="xl"
+          >
             <div class="pa-6 pa-md-7 d-flex flex-column h-100">
               <h3 class="text-h6 font-weight-bold mb-1">{{ t('contact.formTitle') }}</h3>
               <p class="text-body-2 text-medium-emphasis mb-6">{{ t('contact.formSubtitle') }}</p>
@@ -72,32 +89,59 @@ function onSubmitted() {
 
         <!-- Cột phải: ủng hộ -->
         <v-col cols="12" lg="5">
-          <v-card v-reveal="{ delay: 120 }" class="donate-card glass-card h-100" elevation="0" rounded="xl">
+          <v-card
+            v-reveal="{ delay: 120 }"
+            class="donate-card glass-card h-100"
+            elevation="0"
+            rounded="xl"
+          >
             <div class="pa-6 pa-md-7 d-flex flex-column h-100">
-              <v-chip color="accent" variant="tonal" size="small" prepend-icon="mdi-heart-outline" class="mb-4">
+              <v-chip
+                color="accent"
+                variant="tonal"
+                size="small"
+                prepend-icon="mdi-heart-outline"
+                class="mb-4"
+              >
                 {{ t('donate.eyebrow') }}
               </v-chip>
               <h3 class="text-h5 font-weight-bold mb-2">{{ t('donate.title') }}</h3>
               <p class="text-body-2 text-medium-emphasis mb-6">{{ t('donate.subtitle') }}</p>
 
               <v-tabs v-model="donateTab" color="primary" density="comfortable" class="mb-5">
-                <v-tab value="bank" prepend-icon="mdi-bank-outline">{{ t('donate.tabs.bank') }}</v-tab>
+                <v-tab value="bank" prepend-icon="mdi-bank-outline">{{
+                  t('donate.tabs.bank')
+                }}</v-tab>
               </v-tabs>
 
               <v-window v-model="donateTab" class="flex-grow-1">
                 <v-window-item value="bank">
                   <div class="d-flex flex-column ga-4">
                     <CopyField :label="t('donate.fields.bankName')" :value="donate.bank.bankName" />
-                    <CopyField :label="t('donate.fields.accountNumber')" :value="donate.bank.accountNumber" />
-                    <CopyField :label="t('donate.fields.accountHolder')" :value="donate.bank.accountHolder" />
+                    <CopyField
+                      :label="t('donate.fields.accountNumber')"
+                      :value="donate.bank.accountNumber"
+                    />
+                    <CopyField
+                      :label="t('donate.fields.accountHolder')"
+                      :value="donate.bank.accountHolder"
+                    />
                     <CopyField :label="t('donate.fields.branch')" :value="donate.bank.branch" />
 
                     <v-divider class="my-1" />
 
                     <div class="text-center">
-                      <div class="text-body-2 font-weight-medium mb-3">{{ t('donate.qrTitle') }}</div>
+                      <div class="text-body-2 font-weight-medium mb-3">
+                        {{ t('donate.qrTitle') }}
+                      </div>
                       <v-sheet class="donate-card__qr" rounded="xl" elevation="0">
-                        <img :src="donate.bank.qr" :alt="t('donate.qrTitle')" width="200" height="200" loading="lazy" />
+                        <img
+                          :src="donate.bank.qr"
+                          :alt="t('donate.qrTitle')"
+                          width="200"
+                          height="200"
+                          loading="lazy"
+                        />
                       </v-sheet>
                     </div>
                   </div>
@@ -130,9 +174,15 @@ function onSubmitted() {
       </v-row>
     </v-container>
 
-    <v-snackbar v-model="snackbar" color="success" rounded="lg" :timeout="5000" location="bottom">
-      <div class="font-weight-medium">{{ t('contact.success') }}</div>
-      <div class="text-caption">{{ t('contact.successHint') }}</div>
+    <v-snackbar
+      v-model="snackbar"
+      :color="snackbarColor"
+      rounded="lg"
+      :timeout="7000"
+      location="bottom"
+    >
+      <div class="font-weight-medium">{{ t(`contact.result.${deliveryState}.title`) }}</div>
+      <div class="text-caption">{{ t(`contact.result.${deliveryState}.hint`) }}</div>
       <template #actions>
         <v-btn variant="text" @click="snackbar = false">OK</v-btn>
       </template>
