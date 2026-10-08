@@ -99,7 +99,6 @@ function onSubmitted() {
                       <v-sheet class="donate-card__qr" rounded="xl" elevation="0">
                         <img :src="donate.bank.qr" :alt="t('donate.qrTitle')" width="200" height="200" loading="lazy" />
                       </v-sheet>
-                      <div class="text-caption text-medium-emphasis mt-2">{{ t('donate.qrHint') }}</div>
                     </div>
                   </div>
                 </v-window-item>

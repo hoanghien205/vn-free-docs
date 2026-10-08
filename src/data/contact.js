@@ -26,7 +26,7 @@ export const contactChannels = [
     icon: 'mdi-facebook',
     accent: 'amber',
     value: 'facebook.com/your-page',
-    href: 'https://facebook.com/your-page',
+    href: 'https://www.facebook.com/profile.php?id=100068372412676',
   },
 ]
 
