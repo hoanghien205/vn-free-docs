@@ -439,6 +439,68 @@ Ghi chú:
   vercel --prod   # đẩy lên production
   ```
 
+### Thêm IP Access cho MongoDB Atlas (sau khi deploy)
+
+Atlas mặc định **chặn mọi IP không nằm trong danh sách cho phép**, nên backend vừa deploy xong thường gặp lỗi:
+
+```
+Could not connect to any servers in your MongoDB Atlas cluster.
+One common reason is that you're trying to access the database from an IP that isn't whitelisted.
+```
+
+Điểm cần biết trước: serverless function của Vercel **dùng IP ra (egress) động**, đổi theo từng lần chạy — không có dải IP cố định để bạn thêm vào Atlas. Vì vậy có hai hướng:
+
+**Cách 1 — Cho phép mọi IP (cách chuẩn cho serverless, làm 30 giây)**
+
+1. Đăng nhập [cloud.mongodb.com](https://cloud.mongodb.com) → chọn project chứa cluster `web-vn-docs`.
+2. Menu trái: **Security → Network Access** (một số giao diện hiển thị là **Project → Network Access**).
+3. Chọn tab **IP Access List** → bấm **+ Add IP Address**.
+4. Bấm **Allow Access from Anywhere** — Atlas tự điền `0.0.0.0/0` (và `::/0` cho IPv6). Ô mô tả ghi ví dụ `Vercel serverless (dynamic IP)`.
+5. Bấm **Confirm**. Trạng thái chuyển từ _Pending_ sang _Active_, thường dưới 1 phút.
+6. Quay lại `https://<domain>/api/health` — phải thấy `"db":"connected"`. Không cần deploy lại; hàm sẽ tự thử kết nối ở request tiếp theo (nếu vẫn lỗi thì redeploy cho chắc).
+
+> `0.0.0.0/0` **không** có nghĩa là ai cũng đọc được dữ liệu: vẫn phải có đúng tên user + mật khẩu, và API quản trị vẫn yêu cầu `ADMIN_TOKEN`. Để chắc hơn, xem mục _Bù trừ rủi ro_ bên dưới.
+
+**Cách 2 — Chỉ cho phép IP cố định (khi cần siết chặt)**
+
+| Hướng                    | Cách làm                                                                                                                                              |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| IP tĩnh của Vercel       | Vercel có gói **Static IPs / Secure Compute** (thường thuộc gói trả phí) cấp IP ra cố định — thêm đúng các IP đó vào Atlas.                           |
+| Proxy trung gian         | Cho function gọi qua một proxy có IP cố định (QuotaGuard Static, Cloudflare Worker + Tunnel…) rồi whitelist IP của proxy.                             |
+| Tách backend khỏi Vercel | Chạy API trên VPS/Render/Fly có IP tĩnh, whitelist IP đó, rồi đặt `VITE_API_BASE_URL` (hoặc nhập địa chỉ API trong trang quản trị) trỏ về backend đó. |
+
+**Bù trừ rủi ro khi để `0.0.0.0/0`**
+
+- Dùng mật khẩu dài, riêng biệt cho user `hackernovirus_db_user`; không tái sử dụng ở nơi khác.
+- Tạo user Atlas riêng chỉ có quyền `readWrite` trên database `vnfreedocs` (đừng dùng `atlasAdmin`).
+- Bật **Atlas → Alerts** để nhận cảnh báo bất thường, và bật xoay vòng mật khẩu định kỳ.
+- Vercel đã có sẵn lớp chặn spam (`PUBLIC_RATE_LIMIT_MAX`, honeypot) và khoá `ADMIN_TOKEN` cho các API đọc/sửa/xoá.
+
+**Kiểm tra & xử lý sự cố**
+
+- Xem log function: Vercel → **Deployments → (bản mới nhất) → Functions → api/index.js**, hoặc `vercel logs <domain>`. Tìm các dòng bắt đầu bằng `[db]` hoặc `[api] Không kết nối được database:` — đó là lý do thật.
+- Mở `https://<domain>/api/health` khi đang lỗi: JSON trả về có `"db":"unavailable"` kèm `"reason"` (thông báo gốc của driver MongoDB), đủ để biết là do IP hay do sai mật khẩu.
+- Kiểm tra IP mạng của bạn đã được phép chưa bằng chính `mongosh` (nó sẽ hỏi mật khẩu):
+
+  ```bash
+  mongosh "mongodb+srv://web-vn-docs.2yvpi2n.mongodb.net/" --apiVersion 1 --username hackernovirus_db_user
+  ```
+
+  Kết nối được từ máy bạn nhưng API trên Vercel thì không → gần như chắc chắn là IP Access List.
+
+- Lưu ý: dịch vụ Atlas **không** quản lý danh sách IP qua `mongosh` — phải làm trong giao diện web, Atlas CLI hoặc Admin API:
+
+  ```bash
+  curl -X POST "https://cloud.mongodb.com/api/atlas/v1.0/groups/<GROUP_ID>/accessList" \
+    -u "<PUBLIC_KEY>:<PRIVATE_KEY>" \
+    -H 'Content-Type: application/json' \
+    -d '[{"ipAddress":"0.0.0.0/0","comment":"Vercel serverless"}]'
+  ```
+
+  (Atlas CLI thì dùng nhóm lệnh `atlas accessLists`; chạy `atlas accessLists create --help` để xem cú pháp theo phiên bản CLI của bạn.)
+
+- Nếu `/api/health` trả `503` kèm `"db":"unavailable"` và trong log là lỗi xác thực (`bad auth`) thì không phải IP mà là sai mật khẩu trong `MONGODB_URI` — nhớ URL-encode các ký tự `@ : / ? # [ ] %`.
+
 ### Netlify
 
 1. "Add new site → Import an existing project", chọn repo.
