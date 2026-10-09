@@ -27,6 +27,10 @@ export const inboxConfig = {
    * hoặc nhập trực tiếp trong trang quản trị (lưu ở trình duyệt, không cần build lại).
    */
   api: {
+    // true  = gọi API ngay trên domain của website (khuyến nghị khi deploy
+    //         web + backend chung một project Vercel).
+    // false = gọi API ở domain riêng, điền vào `baseUrl` bên dưới.
+    sameOrigin: true,
     // Ví dụ: 'https://api.vnfreedocs.vn' hoặc 'http://localhost:4000'
     baseUrl: '',
   },
@@ -156,24 +160,44 @@ export function readApiSettings() {
   return {
     baseUrl: stripSlash(stored?.baseUrl || DEFAULT_API_BASE_URL || inboxConfig.remote.endpoint),
     adminToken: sanitizeToken(stored?.adminToken ?? inboxConfig.remote.adminToken),
+    sameOrigin: Boolean(stored?.sameOrigin ?? inboxConfig.api.sameOrigin),
   }
 }
 
-export function saveApiSettings({ baseUrl, adminToken }) {
+export function saveApiSettings({ baseUrl, adminToken, sameOrigin }) {
   if (typeof localStorage === 'undefined') return
   localStorage.setItem(
     API_SETTINGS_KEY,
-    JSON.stringify({ baseUrl: stripSlash(baseUrl), adminToken: sanitizeToken(adminToken) }),
+    JSON.stringify({
+      baseUrl: stripSlash(baseUrl),
+      adminToken: sanitizeToken(adminToken),
+      sameOrigin: Boolean(sameOrigin),
+    }),
   )
+}
+
+/**
+ * Địa chỉ đầy đủ cho một endpoint API.
+ * baseUrl rỗng + sameOrigin = true → gọi tương đối trên chính domain của website.
+ */
+export function apiUrl(path) {
+  return `${readApiSettings().baseUrl}${path}`
 }
 
 export const defaultApiBaseUrl = DEFAULT_API_BASE_URL
 export const remoteProvider = () => inboxConfig.remote.provider ?? 'script'
 
+const isJsonResponse = (res) => (res.headers.get('content-type') ?? '').includes('application/json')
+
+export const isApiConfigured = () => {
+  const settings = readApiSettings()
+  return Boolean(settings.baseUrl) || settings.sameOrigin
+}
+
 export const isRemoteInboxEnabled = () => {
   // Với backend Express: chỉ cần có địa chỉ API là bật — nhập trong trang quản trị
   // hoặc đặt sẵn ở `api.baseUrl` / biến môi trường VITE_API_BASE_URL.
-  if (remoteProvider() === 'api') return Boolean(readApiSettings().baseUrl)
+  if (remoteProvider() === 'api') return isApiConfigured()
   return Boolean(inboxConfig.remote.endpoint)
 }
 
@@ -200,13 +224,16 @@ export async function submitMessage(payload) {
   try {
     if (via === 'api') {
       const { baseUrl } = readApiSettings()
-      // Chưa cấu hình backend → lùi về lưu tại trình duyệt để khách không thấy lỗi.
-      if (!baseUrl) return { ok: true, via: 'local', reason: 'api-not-configured' }
       const res = await fetch(`${baseUrl}/api/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ ...payload, botcheck: false }),
       })
+      // Không có backend ở địa chỉ này (404 hoặc trả về HTML của web tĩnh)
+      // → lùi về lưu tại trình duyệt để khách không thấy lỗi.
+      if (res.status === 404 || !isJsonResponse(res)) {
+        return { ok: true, via: 'local', reason: 'api-not-configured' }
+      }
       const data = await res.json().catch(() => ({}))
       if (!res.ok || data.ok === false) {
         throw new Error(data?.error?.message || `Backend trả về lỗi ${res.status}`)
@@ -295,15 +322,33 @@ export async function submitMessage(payload) {
 export async function fetchRemoteMessages({ baseUrl, adminToken } = {}) {
   if (remoteProvider() === 'api') {
     const settings = readApiSettings()
-    const apiBase = stripSlash(baseUrl || settings.baseUrl)
-    const token = adminToken ?? settings.adminToken
-    if (!apiBase) throw new Error('Chưa cấu hình địa chỉ backend.')
+    const apiBase = stripSlash(baseUrl ?? settings.baseUrl)
+    const token = sanitizeToken(adminToken ?? settings.adminToken)
+
+    // Bước 1: backend có ở địa chỉ này không? (/api/health không cần khoá)
+    const health = await fetch(`${apiBase}/api/health`, { method: 'GET' })
+    if (!isJsonResponse(health)) {
+      throw Object.assign(new Error('Chưa có backend ở địa chỉ này.'), { code: 'not_configured' })
+    }
+    const healthData = await health.json().catch(() => ({}))
+    if (!health.ok) {
+      throw new Error(`Backend chưa sẵn sàng (database: ${healthData?.data?.db ?? 'không rõ'}).`)
+    }
+
+    // Bước 2: đọc danh sách cần khoá quản trị.
+    if (!token) {
+      throw Object.assign(new Error('Thiếu khoá quản trị (ADMIN_TOKEN).'), { code: 'unauthorized' })
+    }
 
     const res = await fetch(`${apiBase}/api/messages?limit=500`, {
       method: 'GET',
-      headers: token ? { 'x-admin-token': token } : {},
+      headers: { 'x-admin-token': token },
     })
-    if (res.status === 401) throw new Error('Khoá quản trị không đúng hoặc còn thiếu.')
+    if (res.status === 401) {
+      throw Object.assign(new Error('Khoá quản trị không đúng hoặc còn thiếu.'), {
+        code: 'unauthorized',
+      })
+    }
     if (!res.ok) throw new Error(`Không tải được hộp thư (${res.status})`)
     const data = await res.json()
     return data?.data?.messages ?? data?.messages ?? []
@@ -382,19 +427,20 @@ export async function deleteRemoteMessage(id) {
 }
 
 /** Kiểm tra nhanh địa chỉ backend + khoá quản trị (dùng cho nút "Kiểm tra kết nối"). */
-export async function testApiConnection({ baseUrl, adminToken } = {}) {
+export async function testApiConnection({ baseUrl, adminToken, sameOrigin } = {}) {
   const settings = readApiSettings()
-  const apiBase = stripSlash(baseUrl || settings.baseUrl)
-  const token = adminToken ?? settings.adminToken
-  if (!apiBase) return { ok: false, message: 'Chưa nhập địa chỉ backend.' }
+  const apiBase = stripSlash(baseUrl ?? settings.baseUrl)
+  const token = sanitizeToken(adminToken ?? settings.adminToken)
+  const useSameOrigin = sameOrigin ?? settings.sameOrigin
+  if (!apiBase && !useSameOrigin) return { ok: false, message: 'Chưa nhập địa chỉ backend.' }
 
   try {
     const health = await fetch(`${apiBase}/api/health`, { method: 'GET' })
     const healthData = await health.json().catch(() => ({}))
-    if (!health.ok) {
+    if (!isJsonResponse(health) || !health.ok) {
       return {
         ok: false,
-        message: `Backend phản hồi ${health.status} (database: ${healthData?.data?.db ?? 'không rõ'}).`,
+        message: `Không thấy backend ở địa chỉ này (phản hồi ${health.status}). Kiểm tra lại server đã chạy chưa.`,
       }
     }
 
@@ -402,13 +448,20 @@ export async function testApiConnection({ baseUrl, adminToken } = {}) {
       method: 'GET',
       headers: token ? { 'x-admin-token': token } : {},
     })
+    if (!isJsonResponse(list)) {
+      return { ok: false, message: 'Phản hồi không phải JSON — có thể đang trỏ nhầm vào web tĩnh.' }
+    }
     if (list.status === 401) {
       return { ok: false, message: 'Kết nối được backend nhưng khoá quản trị chưa đúng.' }
     }
     if (!list.ok) return { ok: false, message: `Danh sách tin nhắn trả về ${list.status}.` }
 
     const data = await list.json().catch(() => ({}))
-    return { ok: true, message: 'Kết nối thành công.', total: data?.data?.total ?? 0 }
+    return {
+      ok: true,
+      message: `Kết nối thành công (database: ${healthData?.data?.db ?? 'không rõ'}).`,
+      total: data?.data?.total ?? 0,
+    }
   } catch (error) {
     return {
       ok: false,

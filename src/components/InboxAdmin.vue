@@ -50,20 +50,36 @@ const notice = ref({ show: false, text: '', color: 'success' })
 /* ---------------- Cấu hình backend Express + MongoDB ---------------- */
 
 const apiDialog = ref(false)
-const apiForm = ref({ baseUrl: '', adminToken: '' })
+const apiForm = ref({ baseUrl: '', adminToken: '', sameOrigin: true })
 const apiTest = ref({ testing: false, ok: null, message: '' })
 const showToken = ref(false)
 
 // Giữ cấu hình backend trong ref để giao diện tự cập nhật ngay sau khi lưu.
 const apiSettings = ref(readApiSettings())
 
-// Trạng thái kết nối hiển thị trên tiêu đề trang.
-const backendConnected = computed(() =>
-  remoteProvider() === 'api' ? Boolean(apiSettings.value.baseUrl) : isRemoteInboxEnabled(),
+// Trạng thái kết nối hiển thị trên tiêu đề trang — dựa trên lần đồng bộ gần nhất
+// nên phản ánh đúng việc backend có thật sự trả lời hay không.
+const backendConnected = computed(() => remoteState.value.status === 'connected')
+const backendUnconfigured = computed(() =>
+  ['unconfigured', 'idle', 'auth'].includes(remoteState.value.status),
 )
+const backendNeedsToken = computed(() => remoteState.value.status === 'auth')
 const backendLabel = computed(() => {
+  if (remoteState.value.status === 'loading') return t('inbox.remote.checking')
+  if (remoteState.value.status === 'auth') return t('inbox.remote.needToken')
+  if (remoteState.value.status === 'error') return t('inbox.remote.failed')
   if (!backendConnected.value) return t('inbox.remote.off')
   return remoteProvider() === 'api' ? t('inbox.remote.onApi') : t('inbox.remote.onScript')
+})
+const backendChipColor = computed(() => {
+  if (remoteState.value.status === 'connected') return 'success'
+  if (['error', 'auth'].includes(remoteState.value.status)) return 'warning'
+  return 'grey'
+})
+const backendChipIcon = computed(() => {
+  if (remoteState.value.status === 'connected') return 'mdi-cloud-check-outline'
+  if (remoteState.value.status === 'error') return 'mdi-cloud-alert-outline'
+  return 'mdi-laptop'
 })
 
 function openApiDialog() {
@@ -88,7 +104,7 @@ async function saveApi() {
 }
 
 async function clearApi() {
-  saveApiSettings({ baseUrl: '', adminToken: '' })
+  saveApiSettings({ baseUrl: '', adminToken: '', sameOrigin: false })
   apiSettings.value = readApiSettings()
   apiDialog.value = false
   apiTest.value = { testing: false, ok: null, message: '' }
@@ -369,8 +385,8 @@ onBeforeUnmount(() => window.removeEventListener('hashchange', syncDialogFromHas
             <v-chip
               size="small"
               variant="outlined"
-              :color="backendConnected ? 'success' : 'grey'"
-              :prepend-icon="backendConnected ? 'mdi-cloud-check-outline' : 'mdi-laptop'"
+              :color="backendChipColor"
+              :prepend-icon="backendChipIcon"
             >
               {{ backendLabel }}
             </v-chip>
@@ -550,7 +566,7 @@ onBeforeUnmount(() => window.removeEventListener('hashchange', syncDialogFromHas
         />
 
         <v-alert
-          v-if="!backendConnected"
+          v-if="backendUnconfigured"
           v-reveal
           color="secondary"
           variant="tonal"
@@ -560,7 +576,9 @@ onBeforeUnmount(() => window.removeEventListener('hashchange', syncDialogFromHas
           class="mb-6"
         >
           <div class="d-flex flex-column flex-md-row align-md-center ga-3">
-            <span class="flex-grow-1">{{ t('inbox.api.missing') }}</span>
+            <span class="flex-grow-1">
+              {{ backendNeedsToken ? t('inbox.api.needToken') : t('inbox.api.missing') }}
+            </span>
             <v-btn
               variant="tonal"
               color="secondary"
@@ -598,7 +616,7 @@ onBeforeUnmount(() => window.removeEventListener('hashchange', syncDialogFromHas
         </v-alert>
 
         <v-alert
-          v-if="remoteState.error"
+          v-if="remoteState.error && remoteState.status === 'error'"
           v-reveal
           color="warning"
           variant="tonal"
@@ -802,11 +820,23 @@ onBeforeUnmount(() => window.removeEventListener('hashchange', syncDialogFromHas
         <v-divider />
 
         <v-card-text class="pa-6 pa-md-7">
+          <v-switch
+            v-model="apiForm.sameOrigin"
+            :label="t('inbox.api.sameOrigin')"
+            :hint="t('inbox.api.sameOriginHint')"
+            color="primary"
+            density="comfortable"
+            persistent-hint
+            hide-details="auto"
+            class="mb-6"
+          />
+
           <v-text-field
             v-model="apiForm.baseUrl"
             :label="t('inbox.api.baseUrl')"
             :placeholder="t('inbox.api.baseUrlPlaceholder')"
             :hint="t('inbox.api.baseUrlHint')"
+            :disabled="apiForm.sameOrigin"
             prepend-inner-icon="mdi-web"
             persistent-hint
             class="mb-6"

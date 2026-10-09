@@ -253,7 +253,10 @@ function setStatus(id, status, options = {}) {
     patch.repliedAt = null
   }
   const updated = updateMessage(id, patch)
-  if (updated && options.sync !== false) pushRemoteMessage(id, patch)
+  // Chỉ đẩy lên server những tin nhắn thật sự đến từ server.
+  if (updated && options.sync !== false && updated.source === REMOTE_KEY) {
+    pushRemoteMessage(id, patch)
+  }
   return updated
 }
 
@@ -329,11 +332,19 @@ function importJson(text) {
 
 /* ---------------- Đồng bộ hộp thư từ xa ---------------- */
 
-const remoteState = ref({ loaded: false, loading: false, error: '' })
+/**
+ * status: 'idle' | 'loading' | 'connected' | 'unconfigured' | 'error'
+ * 'unconfigured' nghĩa là chưa có backend ở địa chỉ đang trỏ tới — không phải lỗi.
+ */
+const remoteState = ref({ status: 'idle', loading: false, error: '', configured: false })
 
 async function syncFromRemote() {
-  if (!isRemoteInboxEnabled()) return { ok: false, skipped: true }
-  remoteState.value = { loaded: false, loading: true, error: '' }
+  if (!isRemoteInboxEnabled()) {
+    remoteState.value = { status: 'unconfigured', loading: false, error: '', configured: false }
+    return { ok: false, skipped: true }
+  }
+
+  remoteState.value = { status: 'loading', loading: true, error: '', configured: true }
   try {
     const list = (await fetchRemoteMessages()).map(normalize)
     const localOnly = messages.value.filter((item) => item.source !== REMOTE_KEY)
@@ -343,13 +354,28 @@ async function syncFromRemote() {
       ...localOnly.filter((item) => !remoteIds.has(item.id)),
     ]
     persist()
-    remoteState.value = { loaded: true, loading: false, error: '' }
+    remoteState.value = { status: 'connected', loading: false, error: '', configured: true }
     return { ok: true }
   } catch (error) {
+    if (error?.code === 'not_configured') {
+      remoteState.value = { status: 'unconfigured', loading: false, error: '', configured: false }
+      return { ok: false, skipped: true }
+    }
+    if (error?.code === 'unauthorized') {
+      remoteState.value = {
+        status: 'auth',
+        loading: false,
+        error: error.message ?? '',
+        configured: true,
+      }
+      // Không phải lỗi hệ thống: trang quản trị đã có thẻ nhắc nhập khoá riêng.
+      return { ok: false, error, skipped: true }
+    }
     remoteState.value = {
-      loaded: false,
+      status: 'error',
       loading: false,
       error: error?.message ?? 'Lỗi không xác định',
+      configured: true,
     }
     return { ok: false, error }
   }

@@ -1,0 +1,12 @@
+# Thư mục build & dependency không cần đưa lên Vercel
+dist
+server/node_modules
+**/*.log
+.DS_Store
+
+# Tệp môi trường (khai báo trên Vercel Dashboard thay vì commit)
+.env
+.env.*
+!.env.example
+server/.env
+!server/.env.example

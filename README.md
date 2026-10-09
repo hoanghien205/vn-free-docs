@@ -55,7 +55,9 @@ src/
   plugins/vuetify.js       # cấu hình theme màu & mặc định component
   App.vue, main.js
 public/                    # favicon, ảnh OG, ảnh QR mẫu
-server/                    # backend Express + MongoDB (tuỳ chọn, xem mục 8)
+server/                    # backend Express + MongoDB (npm workspace, xem mục 8)
+api/index.js               # serverless function cho Vercel, bọc server/src
+vercel.json                # cấu hình deploy web + API trên Vercel (mục 9)
 ```
 
 ## 4. Sửa nội dung (không cần chạm vào component)
@@ -298,11 +300,19 @@ Phần này là nơi lưu tin nhắn thật: mỗi tin khách gửi được ghi
 ### 8.1 Cài đặt & chạy
 
 ```bash
-cd server
-npm install
-cp .env.example .env      # rồi mở .env điền mật khẩu MongoDB
-npm start                 # hoặc: npm run dev (tự khởi động lại khi sửa code)
+npm install                          # ở thư mục gốc — npm workspaces cài luôn backend
+cp server/.env.example server/.env   # rồi mở file điền mật khẩu MongoDB
+npm run api                          # chạy API; hoặc npm run api:dev (tự reload khi sửa code)
 ```
+
+Chạy song song hai terminal để vừa xem web vừa có API:
+
+```bash
+npm run dev     # web  → http://localhost:5173
+npm run api     # API  → http://localhost:4000  (Vite tự proxy /api → cổng này)
+```
+
+`server/` là một **npm workspace**, nên dependency của nó (express, mongodb, cors) được cài chung ở `package.json` gốc — không cần `npm install` riêng trong `server/`.
 
 `server/.env` tối thiểu cần:
 
@@ -316,7 +326,7 @@ CORS_ORIGINS=https://vnfreedocs.vn,http://localhost:5173
 - `<PASSWORD>` là mật khẩu của user `hackernovirus_db_user` trên Atlas. Nếu mật khẩu chứa ký tự đặc biệt (`@ : / ? # [ ] %`) thì phải URL-encode.
 - Quên `ADMIN_TOKEN` cũng không sao: server tự sinh một khoá và in ra console khi khởi động (nên đặt cố định trong `.env` cho gọn).
 - Vào **Atlas → Network Access** thêm IP của máy chủ chạy backend (khi deploy lên Render/Fly/Railway thường cần `0.0.0.0/0` hoặc IP tĩnh của dịch vụ).
-- **Muốn thử mà không cần Atlas:** chạy `npm run dev:memory` — backend sẽ dùng MongoDB in-memory và in sẵn địa chỉ API + token. Tắt là mất dữ liệu, chỉ dùng để thử.
+- **Muốn thử mà không cần Atlas:** chạy `npm run api:memory` — backend dùng MongoDB in-memory và in sẵn địa chỉ API + token. Tắt là mất dữ liệu, chỉ dùng để thử.
 
 ### 8.2 Nối frontend với backend
 
@@ -389,11 +399,45 @@ Bộ test dùng MongoDB in-memory thật và kiểm tra đủ luồng: tạo tin
 
 ## 9. Deploy
 
-### Vercel
+### Vercel — một project chạy cả web lẫn backend
 
-1. Đẩy code lên GitHub rồi "Import Project" trên Vercel.
-2. Framework preset: **Vite** — Build command `npm run build`, Output directory `dist`.
-3. Thêm domain trong **Settings → Domains**.
+Repo đã cấu hình sẵn để Vercel deploy **web tĩnh + API Express** trong cùng một project:
+
+- `vercel.json` khai báo framework Vite, output `dist/`, và rewrite mọi request `/api/*` về serverless function **[`api/index.js`](api/index.js)** — file này bọc Express app trong `server/src`.
+- Nhờ vậy web gọi API ngay trên domain của chính nó: **không cần CORS, không cần nhập địa chỉ backend** (trang quản trị tự nhận ra chỉ cần khoá `ADMIN_TOKEN`).
+- `server/` là npm workspace nên Vercel cài dependency từ `package.json` gốc, không cần cấu hình Root Directory.
+
+Các bước:
+
+1. Đẩy code lên GitHub → trên Vercel bấm **Add New → Project** → chọn repo (để nguyên Root Directory).
+2. Vercel tự đọc `vercel.json`. Kiểm tra lại: Framework **Vite**, Build `npm run build`, Output `dist`.
+3. Vào **Settings → Environment Variables**, thêm cho cả Production / Preview / Development:
+
+| Tên            | Giá trị                                                |
+| -------------- | ------------------------------------------------------ |
+| `MONGODB_URI`  | chuỗi kết nối Atlas (đã thay `<PASSWORD>`)             |
+| `MONGODB_DB`   | `vnfreedocs`                                           |
+| `ADMIN_TOKEN`  | chuỗi bí mật ≥ 32 ký tự (`openssl rand -hex 32`)       |
+| `CORS_ORIGINS` | `*` (hoặc domain chính, ví dụ `https://vnfreedocs.vn`) |
+
+4. Bấm **Deploy**, sau đó mở `https://<domain>/api/health` — phải thấy JSON có `"db":"connected"`.
+5. Vào **Atlas → Network Access** thêm `0.0.0.0/0` (Vercel dùng IP động và thay đổi liên tục).
+6. Mở `https://<domain>/#/hop-thu` → **Cấu hình backend**: giữ bật **Gọi API cùng tên miền với website**, dán `ADMIN_TOKEN` → **Kiểm tra kết nối** → **Lưu & tải tin nhắn**.
+
+Từ giờ mỗi lần push lên GitHub, Vercel tự build và deploy lại **cả web lẫn API**.
+
+Ghi chú:
+
+- Đổi `ADMIN_TOKEN` trên Vercel thì phải nhập lại khoá mới trong trang quản trị.
+- Muốn API nhanh hơn cho người Việt: **Settings → Functions → Region → Singapore (sin1)**.
+- Không muốn dùng backend nữa? Xoá `vercel.json` là web vẫn deploy bình thường; khi đó tin nhắn tự lưu ở trình duyệt và bạn có thể chuyển `transport` sang Google Sheet/Web3Forms (mục 7).
+- Deploy bằng CLI nếu thích:
+
+  ```bash
+  npm i -g vercel
+  vercel          # tạo bản preview
+  vercel --prod   # đẩy lên production
+  ```
 
 ### Netlify
 
@@ -426,6 +470,8 @@ Bộ test dùng MongoDB in-memory thật và kiểm tra đủ luồng: tạo tin
 - Trang quản trị hộp thư dùng định tuyến hash (`#/hop-thu`, `#/hop-thu/<id>`) nên không cần vue-router và vẫn deploy tĩnh được.
 - Backend `server/` viết bằng Express 5 + MongoDB driver chính thức, không dùng ODM; kết nối có retry và tự tạo index khi khởi động.
 - Frontend và backend chỉ nói chuyện qua JSON API, nên có thể deploy tách riêng (ví dụ web trên Vercel, API trên Render).
+- Trên Vercel, `api/index.js` chạy như serverless function: kết nối MongoDB được giữ ở phạm vi module để tái sử dụng giữa các lần gọi (tránh mở connection mới cho mỗi request).
+- `npm run api:test` chạy 21 test, bao gồm test riêng cho entrypoint `api/index.js` mà Vercel sử dụng.
 - ESLint 9 (flat config) + Prettier đã cấu hình sẵn trong `eslint.config.js` và `.prettierrc.json`.
 
 ## 11. Giấy phép

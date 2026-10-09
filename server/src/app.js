@@ -41,6 +41,14 @@ export function createApp() {
 
   app.use(securityHeaders)
   app.use(cors(corsOptions))
+
+  // Trên một số nền tảng serverless (Vercel), body có thể đã được parse sẵn.
+  // Đánh dấu để express.json() không đọc lại stream đã cạn.
+  app.use((req, _res, next) => {
+    if (req.body !== undefined && req.body !== null) req._body = true
+    next()
+  })
+
   app.use(express.json({ limit: '32kb' }))
   if (config.logRequests) app.use(requestLog)
 
@@ -63,7 +71,9 @@ export function createApp() {
   app.use('/api/health', healthRoutes)
   app.use('/api/messages', messageRoutes)
 
-  app.use((req, res) => fail(res, ApiError.notFound(`Không có endpoint ${req.method} ${req.path}.`)))
+  app.use((req, res) =>
+    fail(res, ApiError.notFound(`Không có endpoint ${req.method} ${req.path}.`)),
+  )
 
   app.use((error, _req, res, _next) => {
     if (error?.type === 'entity.parse.failed') {

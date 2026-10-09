@@ -17,6 +17,14 @@ export default defineConfig({
   server: {
     port: 5173,
     open: false,
+    // Gọi API qua cùng origin (giống khi deploy trên Vercel).
+    // Chạy backend ở terminal khác: npm run api  (hoặc npm run api:memory)
+    proxy: {
+      '/api': {
+        target: process.env.VITE_API_PROXY ?? 'http://127.0.0.1:4000',
+        changeOrigin: true,
+      },
+    },
   },
   build: {
     target: 'es2020',

@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Backend Express + MongoDB lưu tin nhắn & góp ý khách hàng cho VN Free Docs.",
   "engines": {
-    "node": ">=20.12"
+    "node": ">=20.19"
   },
   "scripts": {
     "start": "node src/index.js",

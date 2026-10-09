@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { config } from '../config.js'
+import { ensureDb } from '../db.js'
 import { ApiError, ok } from '../lib/http.js'
 import { createRateLimiter } from '../lib/rateLimit.js'
 import { parseListQuery, parseMessagePatch, parseNewMessage } from '../lib/validate.js'
@@ -14,6 +15,26 @@ import {
 } from '../models/message.js'
 
 const router = Router()
+
+/**
+ * Trên serverless, kết nối database có thể chưa sẵn sàng ở request đầu tiên.
+ * Middleware này bảo đảm đã kết nối (hoặc báo lỗi 503 rõ ràng) trước khi xử lý.
+ */
+router.use(async (_req, _res, next) => {
+  try {
+    await ensureDb()
+    next()
+  } catch (error) {
+    console.error('[api] Không kết nối được database:', error.message)
+    next(
+      new ApiError(
+        503,
+        'db_unavailable',
+        'Máy chủ chưa kết nối được database. Vui lòng thử lại sau.',
+      ),
+    )
+  }
+})
 
 const publicLimiter = createRateLimiter({
   windowMs: config.publicRateLimit.windowMs,

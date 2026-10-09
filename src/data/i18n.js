@@ -322,6 +322,9 @@ export const messages = {
         onApi: 'Đang kết nối backend (MongoDB)',
         onScript: 'Đang đọc dữ liệu từ Google Sheet',
         off: 'Dữ liệu lưu trên trình duyệt này',
+        checking: 'Đang kiểm tra kết nối…',
+        needToken: 'Cần khoá quản trị để đọc tin trên máy chủ',
+        failed: 'Không kết nối được backend',
         error: 'Không tải được dữ liệu từ xa: {message}',
       },
       api: {
@@ -330,7 +333,10 @@ export const messages = {
         subtitle: 'Nhập địa chỉ API và khoá quản trị để đọc, sửa, xoá tin nhắn lưu trên MongoDB.',
         baseUrl: 'Địa chỉ backend',
         baseUrlPlaceholder: 'https://api.vnfreedocs.vn',
-        baseUrlHint: 'Chạy server/ ở máy thì dùng http://localhost:4000',
+        baseUrlHint: 'Chỉ điền khi backend nằm ở tên miền riêng, ví dụ https://api.vnfreedocs.vn',
+        sameOrigin: 'Gọi API cùng tên miền với website',
+        sameOriginHint:
+          'Bật khi web và backend chung một project Vercel — không cần điền địa chỉ, không cần CORS.',
         adminToken: 'Khoá quản trị (ADMIN_TOKEN)',
         adminTokenHint:
           'Lấy trong server/.env. Khoá chỉ lưu ở trình duyệt này, không gửi tới nơi nào khác.',
@@ -341,6 +347,8 @@ export const messages = {
         clear: 'Ngắt kết nối backend',
         cleared: 'Đã ngắt kết nối backend.',
         missing: 'Chưa cấu hình backend nên tin nhắn chỉ được lưu trên trình duyệt này.',
+        needToken:
+          'Backend đã chạy nhưng còn thiếu khoá quản trị (ADMIN_TOKEN) nên chưa đọc được tin lưu trên máy chủ.',
         setup: 'Cấu hình ngay',
       },
       notice: {
@@ -681,6 +689,9 @@ export const messages = {
         onApi: 'Connected to the backend (MongoDB)',
         onScript: 'Reading from Google Sheet',
         off: 'Stored in this browser',
+        checking: 'Checking the connection…',
+        needToken: 'Admin token required to read server messages',
+        failed: 'Cannot reach the backend',
         error: 'Could not load remote data: {message}',
       },
       api: {
@@ -690,7 +701,11 @@ export const messages = {
           'Enter the API address and admin token to read, update and delete messages stored in MongoDB.',
         baseUrl: 'Backend URL',
         baseUrlPlaceholder: 'https://api.vnfreedocs.vn',
-        baseUrlHint: 'Running server/ locally? Use http://localhost:4000',
+        baseUrlHint:
+          'Only needed when the backend lives on its own domain, e.g. https://api.vnfreedocs.vn',
+        sameOrigin: 'Call the API on this site’s own domain',
+        sameOriginHint:
+          'Turn on when the site and backend share one Vercel project — no URL or CORS setup needed.',
         adminToken: 'Admin token (ADMIN_TOKEN)',
         adminTokenHint:
           'Found in server/.env. The token is kept in this browser only and is never sent anywhere else.',
@@ -701,6 +716,8 @@ export const messages = {
         clear: 'Disconnect backend',
         cleared: 'Backend disconnected.',
         missing: 'No backend configured — messages are only stored in this browser.',
+        needToken:
+          'The backend is running but the admin token (ADMIN_TOKEN) is missing, so server messages cannot be read yet.',
         setup: 'Set it up',
       },
       notice: {

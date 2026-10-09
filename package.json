@@ -4,12 +4,27 @@
   "private": true,
   "type": "module",
   "description": "VN Free Docs — tài liệu, mẫu Excel và công cụ miễn phí cho người Việt, cùng giải pháp công nghệ cho doanh nghiệp.",
+  "workspaces": [
+    "server"
+  ],
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --fix",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "api": "npm run start -w vn-free-docs-api",
+    "api:dev": "npm run dev -w vn-free-docs-api",
+    "api:memory": "npm run dev:memory -w vn-free-docs-api",
+    "api:test": "npm run test -w vn-free-docs-api"
+  },
+  "config": {
+    "mongodbMemoryServer": {
+      "disablePostinstall": "1"
+    }
   },
   "dependencies": {
     "@fontsource/be-vietnam-pro": "^5.1.0",
