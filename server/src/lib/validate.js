@@ -13,7 +13,26 @@ const LIMITS = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
+/** Mã công cụ trên URL tải về: chữ thường, số và dấu gạch ngang. */
+const TOOL_ID_RE = /^[a-z0-9][a-z0-9-]{0,63}$/
+
 const clean = (value, max) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, max)
+
+/** Chuẩn hoá mã công cụ gửi lên từ nút tải; mã lạ bị từ chối để không ghi rác vào database. */
+export function parseToolId(value) {
+  const id = String(value ?? '').trim().toLowerCase()
+  if (!TOOL_ID_RE.test(id)) throw ApiError.badRequest('Mã công cụ không hợp lệ.')
+  return id
+}
+
+/** Nhãn bản tải (Windows, macOS…) — chỉ để tham khảo nên lọc ký tự lạ và cắt ngắn. */
+export function parseDownloadLabel(value) {
+  return String(value ?? '')
+    .replace(/[^\p{L}\p{N} ._+-]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 40)
+}
 
 /**
  * Kiểm tra dữ liệu tin nhắn do khách gửi lên.

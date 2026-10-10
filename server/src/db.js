@@ -64,11 +64,13 @@ async function openWithRetry(uri, dbName, retries) {
 
 async function ensureIndexes(db) {
   const messages = db.collection('messages')
+  const toolDownloads = db.collection('tool_downloads')
   await Promise.all([
     messages.createIndex({ createdAt: -1 }),
     messages.createIndex({ status: 1, createdAt: -1 }),
     messages.createIndex({ type: 1, createdAt: -1 }),
     messages.createIndex({ name: 'text', email: 'text', message: 'text' }),
+    toolDownloads.createIndex({ count: -1 }),
   ])
 }
 

@@ -5,8 +5,10 @@ import ToolCard from '@/components/ToolCard.vue'
 import ToolDetailDialog from '@/components/ToolDetailDialog.vue'
 import { toolCategories, tools } from '@/data/tools'
 import { useLocale } from '@/composables/useLocale'
+import { useToolDownloads } from '@/composables/useToolDownloads'
 
 const { t, lp } = useLocale()
+const { load: loadToolDownloads } = useToolDownloads()
 
 const search = ref('')
 const activeCategory = ref('all')
@@ -65,6 +67,8 @@ onMounted(() => {
   // Chờ một nhịp cho danh sách render xong rồi mới mở hộp thoại từ deep link.
   window.requestAnimationFrame(openToolFromUrl)
   window.addEventListener('hashchange', openToolFromUrl)
+  // Nạp bảng đếm lượt tải một lần để hộp thoại hiện đúng con số.
+  loadToolDownloads()
 })
 
 onBeforeUnmount(() => window.removeEventListener('hashchange', openToolFromUrl))

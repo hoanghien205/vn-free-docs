@@ -44,6 +44,11 @@ export const config = {
     max: toInt(process.env.PUBLIC_RATE_LIMIT_MAX, 8),
     windowMs: toInt(process.env.PUBLIC_RATE_LIMIT_WINDOW_MINUTES, 10) * 60 * 1000,
   },
+  // Bộ đếm lượt tải công cụ: mỗi IP được cộng tối đa N lượt trong W phút.
+  toolDownloadRateLimit: {
+    max: toInt(process.env.TOOL_DOWNLOAD_RATE_LIMIT_MAX, 60),
+    windowMs: toInt(process.env.TOOL_DOWNLOAD_RATE_LIMIT_WINDOW_MINUTES, 10) * 60 * 1000,
+  },
   logRequests: toBool(process.env.LOG_REQUESTS, true),
 }
 
@@ -59,5 +64,6 @@ export function validateConfig() {
     problems.push('MONGODB_URI vẫn còn <PASSWORD> — hãy thay bằng mật khẩu thật của user MongoDB.')
   }
   if (config.publicRateLimit.max < 1) config.publicRateLimit.max = 8
+  if (config.toolDownloadRateLimit.max < 1) config.toolDownloadRateLimit.max = 60
   return problems
 }

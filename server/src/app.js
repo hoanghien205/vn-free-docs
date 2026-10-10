@@ -5,6 +5,7 @@ import { ApiError, fail } from './lib/http.js'
 import requestLog from './middleware/requestLog.js'
 import healthRoutes from './routes/health.js'
 import messageRoutes from './routes/messages.js'
+import toolRoutes from './routes/tools.js'
 
 /** Vài header bảo vệ cơ bản, không cần thêm thư viện. */
 function securityHeaders(_req, res, next) {
@@ -63,6 +64,8 @@ export function createApp() {
           list: 'GET /api/messages',
           update: 'PATCH /api/messages/:id',
           remove: 'DELETE /api/messages/:id',
+          countDownload: 'POST /api/tools/:id/download',
+          downloadCounts: 'GET /api/tools/downloads',
         },
       },
     })
@@ -70,6 +73,7 @@ export function createApp() {
 
   app.use('/api/health', healthRoutes)
   app.use('/api/messages', messageRoutes)
+  app.use('/api/tools', toolRoutes)
 
   app.use((req, res) =>
     fail(res, ApiError.notFound(`Không có endpoint ${req.method} ${req.path}.`)),

@@ -393,6 +393,8 @@ VITE_API_BASE_URL=https://api.vnfreedocs.vn
 | `GET`    | `/api/messages/:id`   | `x-admin-token` | Chi tiết một tin nhắn                 |
 | `PATCH`  | `/api/messages/:id`   | `x-admin-token` | Đổi trạng thái / ghim sao / ghi chú   |
 | `DELETE` | `/api/messages/:id`   | `x-admin-token` | Xoá tin nhắn                          |
+| `POST`   | `/api/tools/:id/download` | công khai   | Cộng một lượt bấm nút tải của công cụ |
+| `GET`    | `/api/tools/downloads`    | công khai   | Bảng đếm lượt tải của từng công cụ    |
 
 ```bash
 # Gửi thử một tin
@@ -402,6 +404,19 @@ curl -X POST http://localhost:4000/api/messages \
 
 # Đọc danh sách (cần khoá quản trị)
 curl http://localhost:4000/api/messages -H "x-admin-token: $ADMIN_TOKEN"
+```
+
+Bộ đếm lượt tải công cụ nằm trong collection `tool_downloads` (mỗi công cụ một document
+với `_id` là mã công cụ, field `count` là số lượt). Frontend tự gọi khi khách bấm nút tải
+trong hộp thoại mô tả; chưa cấu hình backend thì website vẫn chạy bình thường, chỉ không đếm được.
+
+```bash
+# Bấm thử nút tải của công cụ soạn thảo
+curl -X POST http://localhost:4000/api/tools/van-ban-hanh-chinh/download \
+  -H 'Content-Type: application/json' -d '{"label":"Windows"}'
+
+# Xem bảng đếm
+curl http://localhost:4000/api/tools/downloads
 ```
 
 ### 8.4 Bảo mật & chống spam (đã có sẵn)

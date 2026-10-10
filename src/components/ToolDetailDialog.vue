@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { accentGradient } from '@/data/accents'
 import { TOOL_STATUS_META, TOOL_TAG_META, isDemoLink } from '@/data/tools'
 import { useLocale } from '@/composables/useLocale'
+import { useToolDownloads } from '@/composables/useToolDownloads'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -11,7 +12,8 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'afterLeave'])
 
-const { t, lp } = useLocale()
+const { t, lp, locale } = useLocale()
+const { countOf, record } = useToolDownloads()
 
 const demoNotice = ref(false)
 
@@ -57,6 +59,12 @@ const hasDownloads = computed(() => downloads.value.length > 0)
 const link = computed(() => props.tool?.link ?? '')
 const isDemo = computed(() => !hasDownloads.value && Boolean(link.value) && isDemoLink(link.value))
 
+// Số lượt tải đã ghi trong database (đếm theo từng công cụ).
+const downloadCount = computed(() => (props.tool ? countOf(props.tool.id) : 0))
+const downloadCountLabel = computed(() =>
+  t('tools.detail.downloadCount', { count: downloadCount.value.toLocaleString(locale.value) }),
+)
+
 // Công cụ đã phát hành nhưng chưa khai báo bản tải → tạm khoá nút tải.
 const isDownloadPaused = computed(() => isAvailable.value && !hasDownloads.value && !isDemo.value)
 
@@ -100,11 +108,19 @@ function close() {
   show.value = false
 }
 
+function countDownload(label) {
+  if (props.tool) record(props.tool.id, label)
+}
+
 function onDownload(event) {
-  if (!isDemo.value) return
-  // Link mẫu: chặn điều hướng để trang không nhảy lên đầu, rồi báo cho người dùng biết.
-  event.preventDefault()
-  demoNotice.value = true
+  if (isDemo.value) {
+    // Link mẫu: chặn điều hướng để trang không nhảy lên đầu, rồi báo cho người dùng biết.
+    event.preventDefault()
+    demoNotice.value = true
+    return
+  }
+  // Bản tải thật: ghi thêm một lượt vào database.
+  countDownload('')
 }
 </script>
 
@@ -332,6 +348,11 @@ function onDownload(event) {
           </template>
 
           <span v-else class="tool-dialog__link-label">{{ t('tools.detail.notReady') }}</span>
+
+          <span v-if="downloadCount > 0" class="tool-dialog__link-count">
+            <v-icon icon="mdi-download-circle-outline" size="14" />
+            {{ downloadCountLabel }}
+          </span>
         </div>
 
         <v-btn variant="text" color="primary" @click="close">
@@ -350,6 +371,7 @@ function onDownload(event) {
             :href="item.url"
             target="_blank"
             rel="noopener"
+            @click="countDownload(item.label)"
           >
             {{ item.label }}
           </v-btn>
@@ -769,6 +791,18 @@ function onDownload(event) {
   font-size: 0.8125rem;
   color: rgb(var(--v-theme-on-surface));
   opacity: 0.7;
+}
+
+.tool-dialog__link-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 999px;
+  color: rgb(var(--v-theme-primary));
+  background: color-mix(in srgb, rgb(var(--v-theme-primary)) 12%, transparent);
 }
 
 .tool-dialog__link-value {

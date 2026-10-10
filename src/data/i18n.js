@@ -116,6 +116,7 @@ export const messages = {
         downloadReady: 'Sẵn sàng để tải',
         downloadLabel: 'Tải về',
         downloadHint: 'Chọn bản cho hệ điều hành của bạn',
+        downloadCount: '{count} lượt tải',
         downloadPaused:
           'Bản tải về đang tạm khoá để rà soát lại. Bạn để lại liên hệ, tôi sẽ báo ngay khi mở lại.',
         notReady: 'Chưa phát hành',
@@ -495,6 +496,7 @@ export const messages = {
         downloadReady: 'Ready to download',
         downloadLabel: 'Download',
         downloadHint: 'Pick the build for your operating system',
+        downloadCount: '{count} downloads',
         downloadPaused:
           'Downloads are temporarily paused for a review. Leave your contact and I will let you know as soon as they reopen.',
         notReady: 'Not released yet',
