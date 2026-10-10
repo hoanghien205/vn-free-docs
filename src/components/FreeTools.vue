@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import SectionTitle from '@/components/SectionTitle.vue'
 import ToolCard from '@/components/ToolCard.vue'
 import ToolDetailDialog from '@/components/ToolDetailDialog.vue'
@@ -19,6 +19,55 @@ function openTool(tool) {
   selectedTool.value = tool
   dialogOpen.value = true
 }
+
+// Deep link mở sẵn hộp thoại của một công cụ, ví dụ:
+//   /#/cong-cu/van-ban-hanh-chinh   ·   /?tool=van-ban-hanh-chinh   ·   /#cong-cu?tool=excel-ke-toan
+const TOOL_ROUTE = /^#\/(?:cong-cu|tool)(?:\/([^/?]+))?/i
+
+function toolIdFromUrl() {
+  if (typeof window === 'undefined') return ''
+
+  const fromQuery = new URLSearchParams(window.location.search).get('tool')
+  if (fromQuery) return decodeURIComponent(fromQuery)
+
+  const hash = window.location.hash || ''
+  const match = TOOL_ROUTE.exec(hash)
+  if (match) return match[1] ? decodeURIComponent(match[1]) : ''
+
+  const hashQuery = hash.includes('?')
+    ? new URLSearchParams(hash.slice(hash.indexOf('?') + 1))
+    : null
+  return decodeURIComponent(hashQuery?.get('tool') ?? '')
+}
+
+// Đưa mục “Tài liệu & công cụ” vào tầm mắt để sau khi đóng hộp thoại vẫn thấy danh sách.
+function scrollToTools() {
+  const section = document.getElementById('cong-cu')
+  if (!section) return
+
+  const root = document.documentElement
+  const previous = root.style.scrollBehavior
+  root.style.scrollBehavior = 'auto'
+  window.scrollTo({ top: section.getBoundingClientRect().top + window.scrollY - 80 })
+  root.style.scrollBehavior = previous
+}
+
+function openToolFromUrl() {
+  const id = toolIdFromUrl()
+  if (!id) return
+
+  scrollToTools()
+  const tool = tools.find((item) => item.id === id)
+  if (tool) openTool(tool)
+}
+
+onMounted(() => {
+  // Chờ một nhịp cho danh sách render xong rồi mới mở hộp thoại từ deep link.
+  window.requestAnimationFrame(openToolFromUrl)
+  window.addEventListener('hashchange', openToolFromUrl)
+})
+
+onBeforeUnmount(() => window.removeEventListener('hashchange', openToolFromUrl))
 
 // Chú thích 3 nhãn trạng thái hiện trên mỗi thẻ công cụ.
 const statusLegend = [
@@ -43,7 +92,9 @@ const filteredTools = computed(() => {
   })
 })
 
-const hasFilters = computed(() => normalizedSearch.value.length > 0 || activeCategory.value !== 'all')
+const hasFilters = computed(
+  () => normalizedSearch.value.length > 0 || activeCategory.value !== 'all',
+)
 
 function clearFilters() {
   search.value = ''
@@ -108,7 +159,11 @@ function clearFilters() {
           {{ t('tools.resultsCount', { count: filteredTools.length }) }}
         </span>
         <div class="d-flex flex-wrap align-center ga-4 text-caption text-medium-emphasis">
-          <span v-for="item in statusLegend" :key="item.key" class="d-inline-flex align-center ga-1">
+          <span
+            v-for="item in statusLegend"
+            :key="item.key"
+            class="d-inline-flex align-center ga-1"
+          >
             <v-icon :icon="item.icon" :color="item.color" size="14" />
             {{ t(`tools.status.${item.key}`) }}
           </span>
@@ -126,13 +181,7 @@ function clearFilters() {
       </div>
 
       <v-row v-if="filteredTools.length" class="gy-6">
-        <v-col
-          v-for="(tool, index) in filteredTools"
-          :key="tool.id"
-          cols="12"
-          sm="6"
-          lg="4"
-        >
+        <v-col v-for="(tool, index) in filteredTools" :key="tool.id" cols="12" sm="6" lg="4">
           <div v-reveal="{ delay: (index % 3) * 90 }" class="h-100">
             <ToolCard :tool="tool" @open="openTool" />
           </div>

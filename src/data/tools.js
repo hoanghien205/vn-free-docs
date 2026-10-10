@@ -14,6 +14,12 @@
  *      Có logo thì thẻ công cụ hiển thị ảnh này thay cho icon MDI ở trên;
  *      ảnh nằm giữa ô gradient màu của thẻ nên cần nền trong suốt.
  *  - link: TODO thay bằng link thật (Google Drive, GitHub, trang tải…)
+ *  - downloads: (không bắt buộc) danh sách bản tải về theo hệ điều hành, mỗi mục gồm:
+ *      label → tên bản tải ('Windows', 'macOS'…)
+ *      url   → link tải
+ *      icon  → (không bắt buộc) icon MDI, mặc định là mdi-download
+ *      Công cụ có `downloads` sẽ hiện một nút tải cho mỗi bản.
+ *      Để trống cả `link` và `downloads` (hoặc link '#') thì nút tải bị khoá tạm thời.
  *  - gallery: (không bắt buộc) ảnh chụp màn hình thật của công cụ, mỗi mục gồm:
  *      src → đường dẫn ảnh trong /public
  *      caption → { vi, en } chú thích ngắn hiển thị dưới ảnh
@@ -37,7 +43,7 @@ export const tools = [
     tag: 'free',
     status: 'available',
     accent: 'emerald',
-    link: '#',
+    // Tạm khoá tải về: chưa khai báo `link` nên nút tải trong hộp thoại bị vô hiệu hoá.
     vi: {
       name: 'Phần mềm bảng tính kế toán',
       description: 'Sổ thu chi, công nợ, báo cáo lãi lỗ — công thức có sẵn, chỉ cần nhập số liệu.',
@@ -86,7 +92,19 @@ export const tools = [
     tag: 'free',
     status: 'available',
     accent: 'blue',
-    link: 'https://www.vnfreedocs.xyz/',
+    // Bản tải về theo hệ điều hành — hộp thoại hiện một nút cho mỗi bản.
+    downloads: [
+      {
+        label: 'Windows',
+        icon: 'mdi-microsoft-windows',
+        url: 'https://drive.google.com/file/d/1SRTLxK2KwTtJ4zlPHH4ymmYHTapXzF_g/view?usp=sharing',
+      },
+      {
+        label: 'macOS',
+        icon: 'mdi-apple',
+        url: 'https://drive.google.com/file/d/1UXwgKVUKayHvdSGmZcdq-wHCqz_KEQ2d/view?usp=sharing',
+      },
+    ],
     // Ảnh chụp màn hình thật của ứng dụng (bộ tư liệu quảng bá) — hiển thị ở mục “Giao diện thực tế”.
     gallery: [
       {

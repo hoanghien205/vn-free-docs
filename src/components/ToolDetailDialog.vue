@@ -49,9 +49,16 @@ const hasRichContent = computed(
 // Hộp thoại rộng hơn khi có ảnh chụp và lưới tính năng để nội dung thở hơn.
 const dialogWidth = computed(() => (hasRichContent.value ? 980 : 840))
 
+// Bản tải về theo hệ điều hành (Windows, macOS…) — mỗi bản là một nút trong hộp thoại.
+const downloads = computed(() => (props.tool?.downloads ?? []).filter((item) => Boolean(item?.url)))
+const hasDownloads = computed(() => downloads.value.length > 0)
+
 // Link tải là dữ liệu mẫu (`#`) → hiện ghi chú demo thay vì điều hướng đi đâu đó.
-const link = computed(() => props.tool?.link ?? '#')
-const isDemo = computed(() => isDemoLink(link.value))
+const link = computed(() => props.tool?.link ?? '')
+const isDemo = computed(() => !hasDownloads.value && Boolean(link.value) && isDemoLink(link.value))
+
+// Công cụ đã phát hành nhưng chưa khai báo bản tải → tạm khoá nút tải.
+const isDownloadPaused = computed(() => isAvailable.value && !hasDownloads.value && !isDemo.value)
 
 // Chỉ hiện ô thông tin nào có dữ liệu, để công cụ đang làm không bị trống trải.
 const metaFields = computed(() =>
@@ -280,6 +287,18 @@ function onDownload(event) {
         </v-alert>
 
         <v-alert
+          v-else-if="isDownloadPaused"
+          color="warning"
+          variant="tonal"
+          rounded="lg"
+          density="comfortable"
+          icon="mdi-download-off-outline"
+          class="mt-6"
+        >
+          {{ t('tools.detail.downloadPaused') }}
+        </v-alert>
+
+        <v-alert
           v-else-if="isDemo"
           color="primary"
           variant="tonal"
@@ -296,12 +315,22 @@ function onDownload(event) {
 
       <v-card-actions class="tool-dialog__actions pa-6 pa-md-8 flex-wrap ga-3">
         <div class="tool-dialog__link flex-grow-1">
-          <template v-if="isAvailable">
+          <template v-if="hasDownloads">
+            <span class="tool-dialog__link-label">{{ t('tools.detail.downloadLabel') }}</span>
+            <span class="tool-dialog__link-hint">{{ t('tools.detail.downloadHint') }}</span>
+          </template>
+
+          <span v-else-if="isDownloadPaused" class="tool-dialog__link-label">
+            {{ t('tools.detail.downloadLabel') }}
+          </span>
+
+          <template v-else-if="isAvailable">
             <span class="tool-dialog__link-label">
               {{ isDemo ? t('tools.detail.demoBadge') : t('tools.detail.downloadReady') }}
             </span>
             <code class="mono tool-dialog__link-value">{{ link }}</code>
           </template>
+
           <span v-else class="tool-dialog__link-label">{{ t('tools.detail.notReady') }}</span>
         </div>
 
@@ -309,14 +338,32 @@ function onDownload(event) {
           {{ t('tools.detail.close') }}
         </v-btn>
 
+        <template v-if="hasDownloads">
+          <v-btn
+            v-for="item in downloads"
+            :key="item.url"
+            color="primary"
+            variant="flat"
+            size="large"
+            rounded="lg"
+            :prepend-icon="item.icon ?? 'mdi-download'"
+            :href="item.url"
+            target="_blank"
+            rel="noopener"
+          >
+            {{ item.label }}
+          </v-btn>
+        </template>
+
         <v-btn
-          v-if="isAvailable"
+          v-else-if="isAvailable"
           color="primary"
           variant="flat"
           size="large"
           rounded="lg"
           prepend-icon="mdi-download"
           :href="link"
+          :disabled="isDownloadPaused"
           target="_blank"
           rel="noopener"
           @click="onDownload"
@@ -716,6 +763,12 @@ function onDownload(event) {
   text-transform: uppercase;
   color: rgb(var(--v-theme-on-surface));
   opacity: 0.55;
+}
+
+.tool-dialog__link-hint {
+  font-size: 0.8125rem;
+  color: rgb(var(--v-theme-on-surface));
+  opacity: 0.7;
 }
 
 .tool-dialog__link-value {

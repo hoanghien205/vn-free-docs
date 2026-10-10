@@ -86,6 +86,10 @@ Mở `src/data/tools.js`, copy một object có sẵn và sửa lại:
   status: 'available',            // 'available' | 'inProgress' | 'planned'
   accent: 'blue',                 // blue | cyan | violet | emerald | amber | rose
   link: 'https://link-that-cua-ban', // TODO: thay link thật
+  downloads: [                    // không bắt buộc — nhiều bản tải theo hệ điều hành
+    { label: 'Windows', icon: 'mdi-microsoft-windows', url: 'https://…' },
+    { label: 'macOS', icon: 'mdi-apple', url: 'https://…' },
+  ],
   vi: { name: '…', description: '…' },
   en: { name: '…', description: '…' },
   gallery: [                      // không bắt buộc — ảnh chụp màn hình thật, hiện ở mục “Giao diện thực tế”
@@ -125,12 +129,25 @@ Các trường `gallery`, `features`, `formats`, `shortcuts`, `note` đều là 
 `status` quyết định nhãn trên thẻ và nút hành động:
 
 - `available` — đã có: nút “Tải / mở công cụ” mở **hộp thoại mô tả dự án** (`ToolDetailDialog`), trong đó có nút tải gắn `link`. Khi `link` còn là `#` thì nút đó được coi là link mẫu và chỉ hiện thông báo nhắc thay link thật.
+- `available` + `downloads` — hộp thoại hiện một nút tải cho mỗi bản (Windows, macOS…). Bỏ trống cả `link` và `downloads` thì nút tải bị **vô hiệu hoá** kèm ghi chú “tạm khoá” (dùng khi cần tạm dừng phát hành).
 - `inProgress` — đang làm: nút đổi thành “Nhận thông báo khi có”, mở cùng hộp thoại mô tả nhưng thay nút tải bằng ghi chú “đang hoàn thiện” và nút dẫn về mục Liên hệ.
 - `planned` — nằm trong kế hoạch, xử lý giống `inProgress`.
 
 Nội dung vài chữ trong hộp thoại (tiêu đề mục, nhãn ô thông tin, ghi chú link mẫu…) nằm ở `tools.detail` trong `src/data/i18n.js`; phần mô tả từng dự án nằm ở `details.vi` / `details.en` trong `src/data/tools.js`.
 
 Hiện chỉ nhóm **Văn bản** (soạn thảo văn bản) và **Excel** (trang tính) là `available`; nhóm **Công cụ khác** để `inProgress` hoặc `planned` cho tới khi làm xong.
+
+### Deep link mở sẵn hộp thoại của một công cụ
+
+Mỗi công cụ có link riêng để chia sẻ (dán vào bio Facebook, bài đăng, tin nhắn…). Mở link là trang tự cuộn tới mục “Tài liệu & công cụ” và bật sẵn hộp thoại mô tả:
+
+```
+https://www.vnfreedocs.xyz/#/cong-cu/van-ban-hanh-chinh   ← dạng khuyến nghị
+https://www.vnfreedocs.xyz/?tool=van-ban-hanh-chinh       ← dạng query, tiện gắn tham số theo dõi
+https://www.vnfreedocs.xyz/#cong-cu?tool=excel-ke-toan    ← gộp cả hai
+```
+
+`<id>` chính là trường `id` trong `src/data/tools.js` (ví dụ `excel-ke-toan`, `ho-so-nhan-su`, `xu-ly-file`, `nen-anh-hang-loat`). Id không tồn tại thì trang chỉ cuộn tới danh sách công cụ. Logic nằm ở `FreeTools.vue` (`toolIdFromUrl` + `openToolFromUrl`).
 
 ### Thêm một giải pháp mới
 
