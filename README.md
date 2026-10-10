@@ -88,19 +88,39 @@ Mở `src/data/tools.js`, copy một object có sẵn và sửa lại:
   link: 'https://link-that-cua-ban', // TODO: thay link thật
   vi: { name: '…', description: '…' },
   en: { name: '…', description: '…' },
+  gallery: [                      // không bắt buộc — ảnh chụp màn hình thật, hiện ở mục “Giao diện thực tế”
+    {
+      src: '/images/ten-cong-cu/01-tong-quan.jpg', // ảnh đặt trong public/images/…
+      span: 'full',               // tuỳ chọn: để ảnh chiếm trọn một hàng
+      caption: { vi: 'Chú thích ngắn…', en: 'Short caption…' },
+    },
+  ],
   details: {                      // không bắt buộc — nội dung cho hộp thoại mô tả
     vi: {
       overview: 'Đoạn giới thiệu 2–3 câu về dự án…',
       highlights: ['Điểm nổi bật 1', 'Điểm nổi bật 2', '…'],
+      features: [                 // lưới thẻ tính năng chi tiết (bỏ trống nếu chưa cần)
+        { icon: 'mdi-format-bold', title: 'Tên tính năng', text: 'Mô tả 1–2 câu.' },
+      ],
+      formats: {                  // bảng định dạng xuất & nhập (tuỳ chọn)
+        note: 'Câu dẫn cho phần xuất tài liệu…',
+        items: [{ icon: 'mdi-file-pdf-box', label: 'PDF (.pdf)', text: 'Dùng để…' }],
+        importNote: 'Nhập lại từ…',
+      },
+      shortcuts: [{ keys: '⌘S', action: 'Lưu tài liệu' }], // tuỳ chọn
+      note: 'Ghi chú thêm: nền tảng, lưu ý khi cài đặt…',  // tuỳ chọn
       format: 'Excel (.xlsx)',    // 4 ô thông tin nhanh, bỏ trống ô nào cũng được
+      platform: 'Windows · macOS · Linux', // thay cho `format` khi app chạy trên nhiều hệ điều hành
       version: 'v1.0',
       updated: 'Tháng 9/2026',
       license: 'Miễn phí',
     },
-    en: { overview: '…', highlights: ['…'], format: '…', version: '…', updated: '…', license: '…' },
+    en: { overview: '…', highlights: ['…'], features: [], format: '…', version: '…', updated: '…', license: '…' },
   },
 }
 ```
+
+Các trường `gallery`, `features`, `formats`, `shortcuts`, `note` đều là **tuỳ chọn**: chỉ công cụ nào có dữ liệu mới hiện thêm mục tương ứng trong hộp thoại, và hộp thoại tự nới rộng (980px) khi có ảnh chụp.
 
 `status` quyết định nhãn trên thẻ và nút hành động:
 

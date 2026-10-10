@@ -14,9 +14,17 @@
  *      Có logo thì thẻ công cụ hiển thị ảnh này thay cho icon MDI ở trên;
  *      ảnh nằm giữa ô gradient màu của thẻ nên cần nền trong suốt.
  *  - link: TODO thay bằng link thật (Google Drive, GitHub, trang tải…)
+ *  - gallery: (không bắt buộc) ảnh chụp màn hình thật của công cụ, mỗi mục gồm:
+ *      src → đường dẫn ảnh trong /public
+ *      caption → { vi, en } chú thích ngắn hiển thị dưới ảnh
+ *      span: 'full' → ảnh chiếm trọn một hàng trong thư viện ảnh
  *  - details: (không bắt buộc) nội dung dài cho hộp thoại mô tả dự án, gồm:
  *      overview   → đoạn giới thiệu 2–3 câu
  *      highlights → 4 gạch đầu dòng nêu điểm nổi bật
+ *      features   → [{ icon, title, text }] thẻ tính năng chi tiết (2–3 cột)
+ *      formats    → { note, items: [{ icon, label, text }], importNote } định dạng xuất/nhập
+ *      shortcuts  → [{ keys, action }] bảng phím tắt thường dùng
+ *      note       → ghi chú thêm (nền tảng, lưu ý khi cài đặt…)
  *      format / version / updated / license → thông tin nhanh (bỏ trống ô nào cũng được)
  *    Hộp thoại mở ra khi người dùng bấm nút “Tải / mở công cụ” trên thẻ.
  */
@@ -36,7 +44,8 @@ export const tools = [
     },
     en: {
       name: 'Vietnam Sheets software',
-      description: 'Cash book, receivables/payables and P&L reports with formulas ready to fill in.',
+      description:
+        'Cash book, receivables/payables and P&L reports with formulas ready to fill in.',
     },
     details: {
       vi: {
@@ -77,42 +86,146 @@ export const tools = [
     tag: 'free',
     status: 'available',
     accent: 'blue',
-    link: '#',
+    link: 'https://www.vnfreedocs.xyz/',
+    // Ảnh chụp màn hình thật của ứng dụng (bộ tư liệu quảng bá) — hiển thị ở mục “Giao diện thực tế”.
+    gallery: [
+      {
+        src: '/images/soan-thao/01-tong-quan.jpg',
+        span: 'full',
+        caption: {
+          vi: 'Trang A4 thật, thanh công cụ đầy đủ, số từ và số trang.',
+          en: 'A true A4 page, the full toolbar, word and page counts.',
+        },
+      },
+      {
+        src: '/images/soan-thao/03-menu-lenh-slash.jpg',
+        caption: {
+          vi: 'Gõ “/” ở dòng trống để chèn bảng, hình ảnh, danh sách…',
+          en: 'Type “/” on an empty line to insert tables, images, lists…',
+        },
+      },
+      {
+        src: '/images/soan-thao/04-bang-bieu.jpg',
+        caption: {
+          vi: 'Bảng biểu chỉnh trực tiếp: thêm/xoá hàng cột, gộp ô, tô nền.',
+          en: 'Tables edited in place: add or remove rows and columns, merge cells, fill colour.',
+        },
+      },
+      {
+        src: '/images/soan-thao/07-thiet-lap-trang.jpg',
+        caption: {
+          vi: 'Khổ giấy, lề, đầu trang – chân trang và xem trước bản in.',
+          en: 'Paper size, margins, header and footer with a live page preview.',
+        },
+      },
+      {
+        src: '/images/soan-thao/08-xuat-tai-lieu.jpg',
+        caption: {
+          vi: 'Xuất tài liệu: Word, PDF, HTML, JSON hoặc văn bản thuần.',
+          en: 'Export to Word, PDF, HTML, JSON or plain text.',
+        },
+      },
+      {
+        src: '/images/soan-thao/12-che-do-toi.jpg',
+        caption: {
+          vi: 'Chế độ tối dịu mắt, trang giấy vẫn trắng như bản in.',
+          en: 'Dark mode for the interface, pages stay print-white.',
+        },
+      },
+    ],
     vi: {
       name: 'Phần mềm soạn thảo văn bản',
-      description: 'Đơn giản và dễ dàng soạn thảo một tài liệu bất kỳ',
+      description:
+        'Trình soạn thảo miễn phí cho người Việt: gõ tiếng Việt mượt, in chuẩn A4, xuất Word/PDF, dữ liệu lưu ngay trên máy.',
     },
     en: {
-      name: 'Official document editors',
-      description: 'Easy and simple Letters, decisions, minutes and notices formatted to Vietnamese administrative standards.',
+      name: 'Free document editor',
+      description:
+        'A free Vietnamese-first word processor: smooth typing, true A4 layout, Word/PDF export, files kept on your own machine.',
     },
     details: {
       vi: {
         overview:
-          'Trình soạn thảo gọn nhẹ giúp bạn tạo nhanh một văn bản bất kỳ: gõ nội dung, chèn bảng biểu, xuất ra Word hoặc PDF. Khổ giấy, lề và kiểu trình bày đã lưu sẵn nên mỗi lần dùng bạn không phải chỉnh lại từ đầu.',
+          'VN Free Docs là trình soạn thảo văn bản miễn phí, chạy trên Windows, macOS và Linux. Mở lên là viết được ngay: trang A4 đúng như bản in, xuất Word/PDF, dữ liệu lưu ngay trên máy và không cần tài khoản.',
         highlights: [
-          'Soạn thảo, chèn bảng và hình ảnh ngay trên trình duyệt',
-          'Xuất Word (.docx) và PDF giữ đúng định dạng',
-          'Bộ khổ giấy, lề và kiểu trình bày dựng sẵn',
-          'Tự lưu bản nháp, không sợ mất nội dung',
+          'Windows · macOS · Linux — dữ liệu lưu ngay trên máy bạn',
+          'Định dạng đầy đủ: tiêu đề, danh sách, bảng biểu, ảnh có chú thích',
+          'Trang A4/Letter/Legal thật, in ra đúng như trên màn hình',
+          'Gõ “/” để chèn nhanh nội dung, tự động lưu bản nháp',
         ],
-        format: 'Ứng dụng web · .docx · .pdf',
+        formats: {
+          items: [
+            {
+              icon: 'mdi-microsoft-word',
+              label: 'Word (.docx)',
+              text: 'Gửi cơ quan, giữ đúng định dạng',
+            },
+            { icon: 'mdi-file-pdf-box', label: 'PDF (.pdf)', text: 'In và chốt bản cuối' },
+            { icon: 'mdi-language-html5', label: 'HTML', text: 'Đưa lên website' },
+            { icon: 'mdi-code-json', label: 'JSON', text: 'Sao lưu toàn bộ tài liệu' },
+            {
+              icon: 'mdi-file-outline',
+              label: 'Văn bản thuần (.txt)',
+              text: 'Dán vào form, email',
+            },
+          ],
+          importNote: 'Nhập lại từ Word, HTML, JSON hoặc TXT.',
+        },
+        shortcuts: [
+          { keys: '⌘/Ctrl + S', action: 'Lưu tài liệu' },
+          { keys: '⌘/Ctrl + P', action: 'In tài liệu' },
+          { keys: '⌘/Ctrl + F', action: 'Tìm và thay thế' },
+          { keys: '⌘/Ctrl + B · I · U', action: 'Đậm · Nghiêng · Gạch chân' },
+          { keys: '/', action: 'Chèn nhanh khối nội dung' },
+          { keys: 'Tab · ⇧Tab', action: 'Thụt lề · Bỏ thụt lề' },
+        ],
+        platform: 'Windows · macOS · Linux',
         version: 'v1.0',
-        updated: 'Tháng 9/2026',
+        updated: 'Tháng 10/2026',
         license: 'Miễn phí',
       },
       en: {
         overview:
-          'A lightweight editor for any document you need: type the content, drop in tables, then export to Word or PDF. Paper size, margins and styles are stored for you, so you never rebuild the layout again.',
+          'VN Free Docs is a free word processor for Windows, macOS and Linux. Open it and start typing right away: A4 pages match the printout, documents export to Word or PDF, and your files stay on your own machine with no account needed.',
         highlights: [
-          'Write, insert tables and images right in the browser',
-          'Export to Word (.docx) and PDF with layout intact',
-          'Pre-built page sizes, margins and styles',
-          'Drafts saved automatically',
+          'Windows · macOS · Linux — files stay on your own machine',
+          'Full formatting: headings, lists, tables, captioned images',
+          'True A4/Letter/Legal pages that print exactly as shown',
+          'Type “/” to insert content fast, drafts saved automatically',
         ],
-        format: 'Web app · .docx · .pdf',
+        formats: {
+          items: [
+            {
+              icon: 'mdi-microsoft-word',
+              label: 'Word (.docx)',
+              text: 'Send to agencies, layout intact',
+            },
+            {
+              icon: 'mdi-file-pdf-box',
+              label: 'PDF (.pdf)',
+              text: 'Print and lock the final version',
+            },
+            { icon: 'mdi-language-html5', label: 'HTML', text: 'Publish on a website' },
+            { icon: 'mdi-code-json', label: 'JSON', text: 'Back up the whole document' },
+            {
+              icon: 'mdi-file-outline',
+              label: 'Plain text (.txt)',
+              text: 'Paste into forms and email',
+            },
+          ],
+          importNote: 'Import from Word, HTML, JSON or TXT.',
+        },
+        shortcuts: [
+          { keys: '⌘/Ctrl + S', action: 'Save document' },
+          { keys: '⌘/Ctrl + P', action: 'Print' },
+          { keys: '⌘/Ctrl + F', action: 'Find and replace' },
+          { keys: '⌘/Ctrl + B · I · U', action: 'Bold · Italic · Underline' },
+          { keys: '/', action: 'Insert a content block' },
+          { keys: 'Tab · ⇧Tab', action: 'Indent · Outdent' },
+        ],
+        platform: 'Windows · macOS · Linux',
         version: 'v1.0',
-        updated: 'September 2026',
+        updated: 'October 2026',
         license: 'Free',
       },
     },
@@ -172,11 +285,13 @@ export const tools = [
     link: '#',
     vi: {
       name: 'Công cụ xử lý Excel & PDF',
-      description: 'Gộp, tách, đổi tên, chuyển đổi hàng loạt — chạy trực tiếp trên máy bạn, không upload lên mạng.',
+      description:
+        'Gộp, tách, đổi tên, chuyển đổi hàng loạt — chạy trực tiếp trên máy bạn, không upload lên mạng.',
     },
     en: {
       name: 'Excel & PDF utility',
-      description: 'Merge, split, rename and batch convert files locally — nothing is uploaded to the cloud.',
+      description:
+        'Merge, split, rename and batch convert files locally — nothing is uploaded to the cloud.',
     },
     details: {
       vi: {
@@ -217,7 +332,8 @@ export const tools = [
     link: '#',
     vi: {
       name: 'Nén & chuyển đổi ảnh hàng loạt',
-      description: 'Giảm dung lượng ảnh giữ nguyên chất lượng, xử lý cả thư mục chỉ trong vài giây.',
+      description:
+        'Giảm dung lượng ảnh giữ nguyên chất lượng, xử lý cả thư mục chỉ trong vài giây.',
     },
     en: {
       name: 'Batch image compressor',
@@ -251,7 +367,7 @@ export const tools = [
         updated: 'Expected 2026',
       },
     },
-  }
+  },
 ]
 
 /** Thứ tự & nhãn của bộ lọc danh mục (chữ hiển thị lấy từ i18n.js). */
